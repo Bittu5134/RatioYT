@@ -1,26 +1,34 @@
 {
   "private": true,
-  "name": "RatioYT",
-  "description": "JavaScript-based extension with a sidebar panel. Adds a sidebar with a simple page.",
+  "name": "thumbscore",
   "version": "1.0.0",
+  "description": "Cross-browser extension that shows like/dislike ratio scores on YouTube video cards.",
   "license": "MIT",
   "type": "module",
   "author": {
-    "name": "Your Name",
-    "email": "your@email.com",
-    "url": "https://yourwebsite.com"
+    "name": "Bittu",
+    "url": "https://bittu.dev"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bittu5134/ThumbScore.git"
+  },
+  "homepage": "https://thumbscore.bittu.dev",
+  "keywords": [
+    "browser-extension",
+    "webextension",
+    "youtube",
+    "return-youtube-dislike",
+    "extension.js"
+  ],
   "scripts": {
-    "dev": "extension dev --browser=firefox",
-    "start": "extension start",
+    "dev": "extension dev --browser=chrome",
+    "start": "extension start --browser=chrome",
     "build": "extension build",
-    "preview": "extension preview",
+    "preview": "extension preview --browser=chrome",
     "build:chrome": "extension build --browser chrome",
     "build:firefox": "extension build --browser firefox",
     "build:edge": "extension build --browser edge"
-  },
-  "dependencies": {
-    "peerjs": "^1.5.5"
   },
   "devDependencies": {
     "extension": "^3.18.2"
