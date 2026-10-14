@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/chrome-manifest.json",
   "manifest_version": 3,
   "version": "1.0.0",
-  "name": "RatioYT",
-  "description": "Adds RYD dislike metrics directly to the YouTube interface.",
+  "name": "ThumbScore",
+  "description": "Adds like/dislike ratio to YouTube videos.",
   "icons": { "16": "images/icon.png", "128": "images/icon.png" },
   "action": { "default_popup": "./popup/index.html" },
   "permissions": ["storage", "alarms"],
@@ -13,6 +13,9 @@
       "js": ["content/script.js"]
     }
   ],
-  "host_permissions": ["https://returnyoutubedislikeapi.com/*"],
+  "host_permissions": [
+    "https://returnyoutubedislikeapi.com/*",
+    "https://raw.githubusercontent.com/*"
+  ],
   "author": "Bittu"
 }

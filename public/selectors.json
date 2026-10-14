@@ -1,0 +1,127 @@
+{
+  "version": "1.0.0",
+  "remoteConfigUrl": "https://raw.githubusercontent.com/Bittu5134/ThumbScore/main/src/config/selectors.json",
+  "containers": {
+    "observe": [
+      "yt-content-metadata-view-model",
+      "ytm-shorts-lockup-view-model",
+      "ytd-video-renderer",
+      "ytd-playlist-video-renderer",
+      "ytd-playlist-panel-video-renderer",
+      "ytd-compact-video-renderer",
+      "ytd-grid-video-renderer",
+      "yt-lockup-view-model"
+    ],
+    "shorts": [
+      "ytm-shorts-lockup-view-model",
+      "ytd-reel-item-renderer"
+    ],
+    "search": [
+      "ytd-video-renderer"
+    ],
+    "playlist": [
+      "ytd-playlist-video-renderer",
+      "ytd-playlist-panel-video-renderer"
+    ],
+    "lockup": [
+      "yt-content-metadata-view-model",
+      "yt-lockup-view-model"
+    ]
+  },
+  "links": {
+    "regular": [
+      "a#thumbnail[href*='watch?v=']",
+      "a#video-title-link[href*='watch?v=']",
+      "a#video-title[href*='watch?v=']",
+      "a[href*='watch?v=']",
+      "a#thumbnail"
+    ],
+    "shorts": [
+      "a[href*='/shorts/']",
+      ".shortsLockupViewModelHostEndpoint",
+      "a.reel-item-endpoint"
+    ],
+    "lockupParents": [
+      ".ytLockupViewModelHost",
+      "yt-lockup-view-model",
+      "ytd-rich-item-renderer",
+      "ytd-compact-video-renderer"
+    ]
+  },
+  "targetRows": {
+    "lockupMetadata": [
+      "yt-content-metadata-view-model",
+      ".ytLockupViewModelHostMetadata",
+      ".ytLockupMetadataViewModelHost"
+    ],
+    "lockupMetadataRows": [
+      ".ytContentMetadataViewModelMetadataRow"
+    ],
+    "searchMetadata": [
+      "#metadata-line",
+      "#details #metadata",
+      "#meta"
+    ],
+    "searchSeparator": [
+      "#separator"
+    ],
+    "shortsMetadata": [
+      ".shortsLockupViewModelHostOutsideMetadataSubhead",
+      ".shortsLockupViewModelHostMetadataSubhead",
+      ".shortsLockupViewModelHostOutsideMetadata"
+    ],
+    "playlistMetadata": [
+      "#video-info",
+      "span#byline",
+      "#metadata"
+    ]
+  },
+  "classes": {
+    "delimiter": {
+      "lockup": [
+        "ytContentMetadataViewModelDelimiter"
+      ],
+      "playlist": [
+        "style-scope",
+        "yt-formatted-string"
+      ],
+      "search": [
+        "style-scope",
+        "ytd-video-meta-block"
+      ],
+      "shorts": [
+        "ytContentMetadataViewModelDelimiter"
+      ]
+    },
+    "score": {
+      "lockup": [
+        "ytAttributedStringHost",
+        "ytContentMetadataViewModelMetadataText",
+        "ytContentMetadataViewModelMetadataTextLastPart"
+      ],
+      "search": [
+        "inline-metadata-item",
+        "style-scope",
+        "ytd-video-meta-block"
+      ],
+      "playlist": [
+        "style-scope",
+        "yt-formatted-string"
+      ],
+      "shorts": [
+        "ytAttributedStringHost",
+        "ytAttributedStringWhiteSpacePreWrap"
+      ]
+    },
+    "badgeCustom": [
+      "thumbscore-badge"
+    ]
+  },
+  "css": {
+    "delimiterText": " • ",
+    "placeholderText": "--%",
+    "placeholderColor": "#888888",
+    "badgeMargin": "",
+    "scoreStyle": ""
+  }
+}
