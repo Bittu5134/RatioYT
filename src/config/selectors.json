@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "remoteConfigUrl": "https://raw.githubusercontent.com/Bittu5134/ThumbScore/main/src/config/selectors.json",
   "containers": {
     "observe": [
@@ -9,8 +9,7 @@
       "ytd-playlist-video-renderer",
       "ytd-playlist-panel-video-renderer",
       "ytd-compact-video-renderer",
-      "ytd-grid-video-renderer",
-      "yt-lockup-view-model"
+      "ytd-grid-video-renderer"
     ],
     "shorts": [
       "ytm-shorts-lockup-view-model",
@@ -20,8 +19,9 @@
       "ytd-video-renderer"
     ],
     "playlist": [
+      "ytd-playlist-panel-video-renderer",
       "ytd-playlist-video-renderer",
-      "ytd-playlist-panel-video-renderer"
+      "ytd-playlist-video-list-renderer"
     ],
     "lockup": [
       "yt-content-metadata-view-model",
@@ -31,6 +31,7 @@
   "links": {
     "regular": [
       "a#thumbnail[href*='watch?v=']",
+      "a#wc-endpoint[href*='watch?v=']",
       "a#video-title-link[href*='watch?v=']",
       "a#video-title[href*='watch?v=']",
       "a[href*='watch?v=']",
@@ -45,7 +46,8 @@
       ".ytLockupViewModelHost",
       "yt-lockup-view-model",
       "ytd-rich-item-renderer",
-      "ytd-compact-video-renderer"
+      "ytd-compact-video-renderer",
+      "ytd-playlist-video-renderer"
     ]
   },
   "targetRows": {
@@ -71,8 +73,12 @@
       ".shortsLockupViewModelHostOutsideMetadata"
     ],
     "playlistMetadata": [
-      "#video-info",
+      "span#byline:not([hidden])",
       "span#byline",
+      "#video-info:not([hidden])",
+      "#byline-container:not([hidden])",
+      "#byline-container",
+      "#meta",
       "#metadata"
     ]
   },

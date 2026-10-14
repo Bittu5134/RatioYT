@@ -4,13 +4,26 @@
   "version": "1.0.0",
   "name": "ThumbScore",
   "description": "Adds like/dislike ratio to YouTube videos.",
-  "icons": { "16": "images/icon.png", "128": "images/icon.png" },
-  "action": { "default_popup": "./popup/index.html" },
-  "permissions": ["storage", "alarms"],
+  "icons": {
+    "16": "images/icon.png",
+    "128": "images/icon.png"
+  },
+  "action": {
+    "default_popup": "./popup/index.html"
+  },
+  "permissions": [
+    "storage",
+    "alarms"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://*.youtube.com/*", "https://youtube.com/*"],
-      "js": ["content/script.js"]
+      "matches": [
+        "https://*.youtube.com/*",
+        "https://youtube.com/*"
+      ],
+      "js": [
+        "content/script.js"
+      ]
     }
   ],
   "host_permissions": [

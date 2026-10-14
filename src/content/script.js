@@ -40,6 +40,16 @@ async function initSelectors() {
           (activeSelectors.version || "1.0.0") +
           ")",
       );
+    } else {
+      // Try local extension asset fallback if available
+      try {
+        const localUrl = chrome.runtime.getURL("selectors.json");
+        const res = await fetch(localUrl);
+        if (res.ok) {
+          const localJson = await res.json();
+          activeSelectors = mergeConfigs(defaultSelectors, localJson);
+        }
+      } catch (e) {}
     }
 
     // Refresh from GitHub every 6 hours
@@ -232,13 +242,21 @@ function deleteCacheRecord(videoId) {
 function queryFirst(parent, selectors) {
   if (!parent || !selectors) return null;
   const list = Array.isArray(selectors) ? selectors : [selectors];
+  let fallback = null;
   for (const selector of list) {
     try {
       const el = parent.querySelector(selector);
-      if (el) return el;
+      if (el) {
+        // Skip hidden elements if a visible one exists
+        if (el.hasAttribute("hidden") || el.getAttribute("aria-hidden") === "true") {
+          if (!fallback) fallback = el;
+          continue;
+        }
+        return el;
+      }
     } catch (e) {}
   }
-  return null;
+  return fallback;
 }
 
 function isMatch(el, selectors) {
@@ -311,7 +329,10 @@ function getTargetRow(el, category) {
     return queryFirst(el, activeSelectors.targetRows.searchMetadata);
   }
   if (category === "playlist") {
-    return queryFirst(el, activeSelectors.targetRows.playlistMetadata);
+    return (
+      queryFirst(el, activeSelectors.targetRows.playlistMetadata) ||
+      queryFirst(el, activeSelectors.targetRows.lockupMetadata)
+    );
   }
 
   // Lockup / Content Metadata
@@ -325,7 +346,8 @@ function getTargetRow(el, category) {
 
   return (
     queryFirst(el, activeSelectors.targetRows.searchMetadata) ||
-    queryFirst(el, activeSelectors.targetRows.lockupMetadata)
+    queryFirst(el, activeSelectors.targetRows.lockupMetadata) ||
+    queryFirst(el, activeSelectors.targetRows.playlistMetadata)
   );
 }
 

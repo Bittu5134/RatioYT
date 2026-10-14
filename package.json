@@ -24,7 +24,7 @@
   "scripts": {
     "dev": "extension dev --browser=chrome",
     "start": "extension start --browser=chrome",
-    "build": "extension build",
+    "build": "extension build --browser chrome",
     "preview": "extension preview --browser=chrome",
     "build:chrome": "extension build --browser chrome",
     "build:firefox": "extension build --browser firefox",
