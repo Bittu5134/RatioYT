@@ -32,7 +32,7 @@
             <select id="scoringSystem" required>
                 <option value="percentage" selected>Percentage (55%)</option>
                 <option value="decimal">10 Point Decimal (5.5/10)</option>
-                <option value="point">10 Poin(5/10)</option>
+                <option value="point">10 Point (5/10)</option>
                 <option value="star">5 Star (3/5)</option>
                 <option value="smiley">3 Point Smiley :)</option>
             </select>
@@ -54,16 +54,6 @@
                 </div>
                 <input type="range" id="lowScoreThreshold" min="0" max="100" value="20">
             </div>
-
-            <div class="setting-row">
-                <span class="setting-label">Cache Sharing</span>
-                <input type="checkbox" id="cacheSharing" role="switch">
-            </div>
-            <small id="cacheNote" class="hidden"
-                style="display:block; color: #a58e8b; margin-top: -0.5rem; margin-bottom: 1rem;">
-                Note: your browser will connect to a p2p swarm and share the cache with other users to improve performace.
-            </small>
-
 
             <div class="version-tag">v1.0.0</div>
     </main>
