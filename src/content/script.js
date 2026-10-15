@@ -2,7 +2,6 @@ import defaultSelectors from "../config/selectors.json";
 
 let activeSelectors = { ...defaultSelectors };
 
-// User preferences
 let userSettings = {
   scoringSystem: "percentage",
   scoringColour: true,
@@ -10,13 +9,10 @@ let userSettings = {
   lowScoreThreshold: 20,
 };
 
-// Queue & Throttling
 let elementQueue = [];
 let queueIntervalId = null;
 let pendingVideos = new Set();
-let scanScheduled = false;
-
-// In-memory cache
+let scanTimeout = null;
 let scoreDB = {};
 
 const DB_NAME = "RatioYT";
@@ -26,7 +22,7 @@ let dbInstance = null;
 let observerStarted = false;
 
 // =========================================
-// 1. SELECTORS & CONFIG (Local + GitHub Remote)
+// 1. CONFIG & SETTINGS
 // =========================================
 
 async function initSelectors() {
@@ -34,31 +30,22 @@ async function initSelectors() {
     const data = await chrome.storage.local.get(["remoteSelectors", "selectorsLastFetched"]);
     if (data.remoteSelectors && typeof data.remoteSelectors === "object") {
       activeSelectors = mergeConfigs(defaultSelectors, data.remoteSelectors);
-      console.log(
-        "[RatioYT] Loaded remote selectors from storage cache (v" +
-          (activeSelectors.version || "1.0.0") +
-          ")",
-      );
     } else {
-      // Try local extension asset fallback if available
       try {
         const localUrl = chrome.runtime.getURL("selectors.json");
         const res = await fetch(localUrl);
         if (res.ok) {
-          const localJson = await res.json();
-          activeSelectors = mergeConfigs(defaultSelectors, localJson);
+          activeSelectors = mergeConfigs(defaultSelectors, await res.json());
         }
       } catch (e) {}
     }
 
-    // Refresh from GitHub every 6 hours
-    const REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
     const lastFetched = data.selectorsLastFetched || 0;
-    if (Date.now() - lastFetched > REFRESH_INTERVAL_MS) {
+    if (Date.now() - lastFetched > 6 * 60 * 60 * 1000) {
       fetchRemoteSelectors(activeSelectors.remoteConfigUrl);
     }
   } catch (err) {
-    console.warn("[RatioYT] Error loading selectors from storage:", err);
+    console.warn("[RatioYT] Failed to load selectors:", err);
   }
 }
 
@@ -69,21 +56,15 @@ async function fetchRemoteSelectors(url) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const remoteConfig = await response.json();
 
-    if (remoteConfig && remoteConfig.containers && remoteConfig.targetRows) {
+    if (remoteConfig?.containers && remoteConfig?.targetRows) {
       activeSelectors = mergeConfigs(defaultSelectors, remoteConfig);
       await chrome.storage.local.set({
         remoteSelectors: remoteConfig,
         selectorsLastFetched: Date.now(),
       });
-      console.log(
-        "[RatioYT] Updated selectors from GitHub successfully (v" +
-          (remoteConfig.version || "remote") +
-          ")",
-      );
     }
   } catch (err) {
-    // Graceful fallback to local JSON
-    console.log("[RatioYT] Using local selectors (remote update check failed:", err.message + ")");
+    console.log("[RatioYT] Remote selectors fetch failed, using local:", err.message);
   }
 }
 
@@ -103,23 +84,6 @@ function mergeConfigs(base, override) {
     },
     css: { ...base.css, ...(override.css || {}) },
   };
-}
-
-// =========================================
-// 2. USER SETTINGS & LIVE BADGE UPDATES
-// =========================================
-
-function updateRenderedBadges() {
-  const badges = document.querySelectorAll(".ratioyt-badge, .thumbscore-badge");
-  badges.forEach((badge) => {
-    const scoreVal = parseInt(badge.dataset.ratioytValue, 10);
-    if (!isNaN(scoreVal)) {
-      const card = badge.closest(
-        "ytd-rich-item-renderer, ytd-video-renderer, yt-lockup-view-model, ytm-shorts-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, ytd-compact-video-renderer",
-      );
-      applyFinalScore(badge, scoreVal, card);
-    }
-  });
 }
 
 function initUserSettings() {
@@ -155,15 +119,24 @@ function initUserSettings() {
   });
 }
 
+function updateRenderedBadges() {
+  document.querySelectorAll(".ratioyt-badge").forEach((badge) => {
+    const scoreVal = parseInt(badge.dataset.ratioytValue, 10);
+    if (!isNaN(scoreVal)) {
+      const card = badge.closest(
+        "ytd-rich-item-renderer, ytd-video-renderer, yt-lockup-view-model, ytm-shorts-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, ytd-compact-video-renderer",
+      );
+      applyFinalScore(badge, scoreVal, card);
+    }
+  });
+}
+
 // =========================================
-// 3. STORAGE (IndexedDB Cache for single user)
+// 2. STORAGE (IndexedDB Cache)
 // =========================================
 
 function getStore(mode = "readonly") {
-  if (!dbInstance) {
-    console.warn("[RatioYT] Database connection is not ready yet.");
-    return null;
-  }
+  if (!dbInstance) return null;
   return dbInstance.transaction(DB_STORE, mode).objectStore(DB_STORE);
 }
 
@@ -179,35 +152,27 @@ function initializeDatabase() {
 
   request.onsuccess = (event) => {
     dbInstance = event.target.result;
-
     const store = getStore();
     const getAllRequest = store.getAll();
 
     getAllRequest.onsuccess = () => {
       const allEntries = getAllRequest.result || [];
       const now = Date.now();
-      let activeCount = 0;
 
       allEntries.forEach((entry) => {
         if (entry.expiresAt > now) {
-          scoreDB[entry.videoId] = {
-            score: entry.score,
-            expiresAt: entry.expiresAt,
-          };
-          activeCount++;
+          scoreDB[entry.videoId] = { score: entry.score, expiresAt: entry.expiresAt };
         } else {
-          // Clean up expired cache record
           deleteCacheRecord(entry.videoId);
         }
       });
 
-      console.log("[RatioYT] Cache loaded:", activeCount, "valid entries");
       startObserver();
     };
   };
 
   request.onerror = (event) => {
-    console.error("[RatioYT] IndexedDB initialization failed:", event.target.error);
+    console.error("[RatioYT] IndexedDB error:", event.target.error);
     startObserver();
   };
 }
@@ -215,27 +180,18 @@ function initializeDatabase() {
 function saveToIndexDB(videoId, scoreValue, expiresAt) {
   const store = getStore("readwrite");
   if (!store) return;
-
-  const newEntry = {
-    videoId: videoId,
-    score: scoreValue,
-    expiresAt: expiresAt,
-  };
-
-  scoreDB[videoId] = { score: scoreValue, expiresAt: expiresAt };
-  store.put(newEntry);
+  scoreDB[videoId] = { score: scoreValue, expiresAt };
+  store.put({ videoId, score: scoreValue, expiresAt });
 }
 
 function deleteCacheRecord(videoId) {
   delete scoreDB[videoId];
   const store = getStore("readwrite");
-  if (!store) return false;
-  store.delete(videoId);
-  return true;
+  if (store) store.delete(videoId);
 }
 
 // =========================================
-// 4. SELECTOR & DOM RESOLUTION HELPERS
+// 3. SELECTOR & DOM HELPERS
 // =========================================
 
 function queryFirst(parent, selectors) {
@@ -246,7 +202,6 @@ function queryFirst(parent, selectors) {
     try {
       const el = parent.querySelector(selector);
       if (el) {
-        // Skip hidden elements if a visible one exists
         if (el.hasAttribute("hidden") || el.getAttribute("aria-hidden") === "true") {
           if (!fallback) fallback = el;
           continue;
@@ -299,8 +254,6 @@ function getVideoId(el, category) {
     }
 
     let link = queryFirst(el, activeSelectors.links.regular);
-
-    // If not found in the element itself, search ancestor lockup container
     if (!link && activeSelectors.links.lockupParents) {
       for (const parentSelector of activeSelectors.links.lockupParents) {
         const parentHost = el.closest(parentSelector);
@@ -313,8 +266,7 @@ function getVideoId(el, category) {
 
     if (!link) return null;
     const href = link.getAttribute("href") || "";
-    const params = new URLSearchParams(href.split("?")[1] || "");
-    return params.get("v");
+    return new URLSearchParams(href.split("?")[1] || "").get("v");
   } catch (err) {
     return null;
   }
@@ -334,7 +286,6 @@ function getTargetRow(el, category) {
     );
   }
 
-  // Lockup / Content Metadata
   const rows = el.querySelectorAll(
     activeSelectors.targetRows.lockupMetadataRows?.join(", ") ||
       ".ytContentMetadataViewModelMetadataRow",
@@ -351,79 +302,41 @@ function getTargetRow(el, category) {
 }
 
 // =========================================
-// 5. UI INJECTION & STYLING
+// 4. UI INJECTION & STYLING
 // =========================================
 
 function injectPlaceholder(targetRow, category) {
   const isSearch = category === "search";
-  let nativeSeparator = null;
 
   if (isSearch && activeSelectors.targetRows.searchSeparator) {
-    nativeSeparator = queryFirst(targetRow, activeSelectors.targetRows.searchSeparator);
-    if (nativeSeparator) {
-      nativeSeparator.removeAttribute("hidden");
-    }
-  }
-
-  // Delimiter (ensure only one delimiter exists in this row)
-  if (!nativeSeparator) {
-    const existingDelims = targetRow.querySelectorAll(".ratioyt-delimiter, .thumbscore-delimiter");
-    for (let i = 1; i < existingDelims.length; i++) {
-      existingDelims[i].remove();
-    }
-
-    let delimiter = existingDelims[0] || null;
-    if (!delimiter) {
-      delimiter = document.createElement("span");
-      const delimClasses = [
-        ...(activeSelectors.classes?.delimiter?.[category] || [
-          "ytContentMetadataViewModelDelimiter",
-        ]),
-        "ratioyt-delimiter",
-      ];
-      delimiter.className = delimClasses.join(" ");
-      delimiter.textContent = activeSelectors.css?.delimiterText || " • ";
-      if (activeSelectors.css?.delimiterStyle) {
-        delimiter.style.cssText = activeSelectors.css.delimiterStyle;
-      }
-      targetRow.appendChild(delimiter);
-    }
-  }
-
-  // Score badge (re-use if already present, clean up any duplicates)
-  const existingBadges = targetRow.querySelectorAll(".ratioyt-badge, .thumbscore-badge");
-  for (let i = 1; i < existingBadges.length; i++) {
-    existingBadges[i].remove();
-  }
-
-  let scoreSpan = existingBadges[0] || null;
-  if (!scoreSpan) {
-    scoreSpan = document.createElement("span");
-    const scoreClasses = [
-      ...(activeSelectors.classes?.score?.[category] || [
-        "ytAttributedStringHost",
-        "ytContentMetadataViewModelMetadataText",
-      ]),
-      ...(activeSelectors.classes?.badgeCustom || ["ratioyt-badge"]),
+    const sep = queryFirst(targetRow, activeSelectors.targetRows.searchSeparator);
+    if (sep) sep.removeAttribute("hidden");
+  } else if (!targetRow.querySelector(".ratioyt-delimiter")) {
+    const delim = document.createElement("span");
+    const classes = activeSelectors.classes?.delimiter?.[category] || [
+      "ytContentMetadataViewModelDelimiter",
     ];
-    scoreSpan.className = scoreClasses.join(" ");
-    scoreSpan.classList.add("ratioyt-badge");
-    scoreSpan.style.color = activeSelectors.css?.placeholderColor || "#888888";
-    scoreSpan.textContent = activeSelectors.css?.placeholderText || "--%";
-
-    if (activeSelectors.css?.scoreStyle) {
-      scoreSpan.style.cssText += activeSelectors.css.scoreStyle;
-    }
-
-    targetRow.appendChild(scoreSpan);
-  } else {
-    scoreSpan.classList.add("ratioyt-badge");
-    // Reset to placeholder if refreshed
-    scoreSpan.style.color = activeSelectors.css?.placeholderColor || "#888888";
-    scoreSpan.textContent = activeSelectors.css?.placeholderText || "--%";
+    delim.className = `${classes.join(" ")} ratioyt-delimiter`;
+    delim.textContent = activeSelectors.css?.delimiterText || " • ";
+    if (activeSelectors.css?.delimiterStyle) delim.style.cssText = activeSelectors.css.delimiterStyle;
+    targetRow.appendChild(delim);
   }
 
-  return scoreSpan;
+  let badge = targetRow.querySelector(".ratioyt-badge");
+  if (!badge) {
+    badge = document.createElement("span");
+    const classes = activeSelectors.classes?.score?.[category] || [
+      "ytAttributedStringHost",
+      "ytContentMetadataViewModelMetadataText",
+    ];
+    badge.className = `${classes.join(" ")} ratioyt-badge`;
+    if (activeSelectors.css?.scoreStyle) badge.style.cssText = activeSelectors.css.scoreStyle;
+    targetRow.appendChild(badge);
+  }
+
+  badge.style.color = activeSelectors.css?.placeholderColor || "#888888";
+  badge.textContent = activeSelectors.css?.placeholderText || "--%";
+  return badge;
 }
 
 function formatScoreText(scoreValue, format) {
@@ -449,14 +362,10 @@ function applyFinalScore(placeholderElement, scoreValue, cardElement) {
 
   placeholderElement.dataset.ratioytValue = String(scoreValue);
   placeholderElement.textContent = formatScoreText(scoreValue, userSettings.scoringSystem);
+  placeholderElement.style.color = userSettings.scoringColour
+    ? `hsl(${scoreValue * 1.2}, 100%, 45%)`
+    : "";
 
-  if (userSettings.scoringColour) {
-    placeholderElement.style.color = `hsl(${scoreValue * 1.2}, 100%, 45%)`;
-  } else {
-    placeholderElement.style.color = "";
-  }
-
-  // Non-destructive low score visibility management
   if (cardElement) {
     const hostCard =
       cardElement.closest(
@@ -475,20 +384,18 @@ function applyFinalScore(placeholderElement, scoreValue, cardElement) {
 }
 
 // =========================================
-// 6. QUEUE & NETWORK REQUESTS
+// 5. QUEUE & NETWORK
 // =========================================
 
 async function processQueue() {
-  // Purge any detached or orphaned tasks from queue immediately
   let currentTask = null;
   while (elementQueue.length > 0) {
     const candidate = elementQueue.shift();
     if (candidate.placeholderElement && document.body.contains(candidate.placeholderElement)) {
       currentTask = candidate;
       break;
-    } else {
-      pendingVideos.delete(candidate.videoId);
     }
+    pendingVideos.delete(candidate.videoId);
   }
 
   if (!currentTask) {
@@ -499,21 +406,17 @@ async function processQueue() {
     return;
   }
 
-  const videoID = currentTask.videoId;
-  const placeholderElement = currentTask.placeholderElement;
-  const cardElement = currentTask.cardElement;
+  const { videoId, placeholderElement, cardElement } = currentTask;
+  pendingVideos.delete(videoId);
 
-  pendingVideos.delete(videoID);
-
-  // Check if cache was populated while waiting in queue
-  const cachedRecord = scoreDB[videoID];
+  const cachedRecord = scoreDB[videoId];
   if (cachedRecord !== undefined && cachedRecord.expiresAt > Date.now()) {
     applyFinalScore(placeholderElement, cachedRecord.score, cardElement);
     return;
   }
 
   try {
-    const response = await fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${videoID}`);
+    const response = await fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${videoId}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const votes = await response.json();
 
@@ -523,21 +426,19 @@ async function processQueue() {
     }
 
     const total = votes.likes + votes.dislikes;
-    const fetchedScore = total > 0 ? Math.round((votes.likes / total) * 100) : 0;
+    const score = total > 0 ? Math.round((votes.likes / total) * 100) : 0;
+    const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
 
-    // Cache for 7 days
-    const expirationTimestamp = Date.now() + 7 * 24 * 60 * 60 * 1000;
-    saveToIndexDB(videoID, fetchedScore, expirationTimestamp);
-
-    applyFinalScore(placeholderElement, fetchedScore, cardElement);
+    saveToIndexDB(videoId, score, expiresAt);
+    applyFinalScore(placeholderElement, score, cardElement);
   } catch (err) {
-    console.warn("[RatioYT] API fetch failed for", videoID, err.message);
+    console.warn("[RatioYT] Failed score for", videoId, err.message);
     placeholderElement.textContent = "--%";
   }
 }
 
 // =========================================
-// 7. OBSERVER & LIFECYCLE
+// 6. OBSERVER & LIFECYCLE
 // =========================================
 
 function scanAndProcessCards() {
@@ -554,30 +455,23 @@ function scanAndProcessCards() {
     const targetRow = getTargetRow(el, category);
     if (!targetRow) return;
 
-    // Skip if already processed for this specific video ID and badge exists
-    const existingBadge = targetRow.querySelector(".ratioyt-badge, .thumbscore-badge");
+    const existingBadge = targetRow.querySelector(".ratioyt-badge");
     if (el.dataset.ratioytVideoId === videoId && existingBadge) {
       return;
     }
 
     el.dataset.ratioytVideoId = videoId;
-    const placeholderElement = injectPlaceholder(targetRow, category);
+    const badge = injectPlaceholder(targetRow, category);
     const cachedRecord = scoreDB[videoId];
 
     if (cachedRecord !== undefined && cachedRecord.expiresAt > Date.now()) {
-      applyFinalScore(placeholderElement, cachedRecord.score, el);
+      applyFinalScore(badge, cachedRecord.score, el);
     } else {
       if (cachedRecord !== undefined) deleteCacheRecord(videoId);
       if (!pendingVideos.has(videoId)) {
         pendingVideos.add(videoId);
-        const task = {
-          videoId: videoId,
-          placeholderElement: placeholderElement,
-          cardElement: el,
-        };
-
-        // Prioritize cards currently visible in viewport
-        if (isElementInViewport(placeholderElement)) {
+        const task = { videoId, placeholderElement: badge, cardElement: el };
+        if (isElementInViewport(badge)) {
           elementQueue.unshift(task);
         } else {
           elementQueue.push(task);
@@ -591,8 +485,6 @@ function scanAndProcessCards() {
   }
 }
 
-// Debounce DOM scanning to prevent UI lag while ensuring execution in all tab states
-let scanTimeout = null;
 function scheduleScan() {
   if (scanTimeout) clearTimeout(scanTimeout);
   scanTimeout = setTimeout(() => {
@@ -601,9 +493,7 @@ function scheduleScan() {
   }, 60);
 }
 
-const observer = new MutationObserver(() => {
-  scheduleScan();
-});
+const observer = new MutationObserver(() => scheduleScan());
 
 function startObserver() {
   const target = document.body || document.documentElement;
@@ -631,16 +521,10 @@ window.addEventListener("yt-navigate-start", () => {
   }
 });
 
-window.addEventListener("yt-navigate-finish", () => {
-  scheduleScan();
-});
-
+window.addEventListener("yt-navigate-finish", () => scheduleScan());
 window.addEventListener("DOMContentLoaded", () => scheduleScan());
 window.addEventListener("load", () => scheduleScan());
 window.addEventListener("popstate", () => scheduleScan());
 
-// Initialization
 initUserSettings();
-initSelectors().then(() => {
-  initializeDatabase();
-});
+initSelectors().then(() => initializeDatabase());
