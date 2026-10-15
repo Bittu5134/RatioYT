@@ -5,8 +5,10 @@ let activeSelectors = { ...defaultSelectors };
 let userSettings = {
   scoringSystem: "percentage",
   scoringColour: true,
+  hideOnlyMode: false,
   hideLowScore: false,
-  lowScoreThreshold: 20,
+  lowScoreThreshold: 25,
+  hideStyle: "collapse",
 };
 
 let elementQueue = [];
@@ -22,8 +24,77 @@ let dbInstance = null;
 let observerStarted = false;
 
 // =========================================
-// 1. CONFIG & SETTINGS
+// 1. STYLES & CONFIG
 // =========================================
+
+function injectCustomStyles() {
+  if (document.getElementById("ratioyt-styles")) return;
+  const style = document.createElement("style");
+  style.id = "ratioyt-styles";
+  style.textContent = `
+    .ratioyt-blur-host {
+      position: relative !important;
+    }
+    .ratioyt-blur-target {
+      filter: blur(24px) brightness(0.2) !important;
+      -webkit-filter: blur(24px) brightness(0.2) !important;
+      pointer-events: none !important;
+      user-select: none !important;
+      transition: filter 0.25s ease !important;
+    }
+    .ratioyt-blur-overlay {
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 100 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 6px !important;
+      background: rgba(0, 0, 0, 0.5) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      border-radius: 12px !important;
+      cursor: pointer !important;
+      user-select: none !important;
+      transition: all 0.2s ease !important;
+    }
+    .ratioyt-blur-overlay:hover {
+      background: rgba(0, 0, 0, 0.3) !important;
+    }
+    .ratioyt-blur-pill {
+      background: rgba(255, 59, 48, 0.95) !important;
+      color: #ffffff !important;
+      font-size: 11px !important;
+      font-weight: 700 !important;
+      padding: 3px 10px !important;
+      border-radius: 20px !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    }
+    .ratioyt-blur-sub {
+      font-size: 10px !important;
+      color: #e0e0e0 !important;
+      font-weight: 500 !important;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8) !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    }
+    .ratioyt-unblurred .ratioyt-blur-target {
+      filter: none !important;
+      -webkit-filter: none !important;
+      pointer-events: auto !important;
+    }
+    .ratioyt-unblurred .ratioyt-blur-overlay {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+    .ratioyt-hide-badges .ratioyt-badge:not(.ratioyt-force-show),
+    .ratioyt-hide-badges .ratioyt-delimiter:not(.ratioyt-force-show) {
+      display: none !important;
+    }
+  `;
+  (document.head || document.documentElement).appendChild(style);
+}
 
 async function initSelectors() {
   try {
@@ -91,11 +162,14 @@ function initUserSettings() {
     {
       scoringSystem: "percentage",
       scoringColour: true,
+      hideOnlyMode: false,
       hideLowScore: false,
-      lowScoreThreshold: 20,
+      lowScoreThreshold: 25,
+      hideStyle: "collapse",
     },
     (config) => {
       userSettings = { ...userSettings, ...config };
+      applyGlobalBadgeVisibility();
     },
   );
 
@@ -113,10 +187,20 @@ function initUserSettings() {
         settingsChanged = true;
       }
       if (settingsChanged) {
+        applyGlobalBadgeVisibility();
         updateRenderedBadges();
       }
     }
   });
+}
+
+function applyGlobalBadgeVisibility() {
+  const root = document.documentElement;
+  if (userSettings.hideOnlyMode) {
+    root.classList.add("ratioyt-hide-badges");
+  } else {
+    root.classList.remove("ratioyt-hide-badges");
+  }
 }
 
 function updateRenderedBadges() {
@@ -193,6 +277,11 @@ function deleteCacheRecord(videoId) {
 // =========================================
 // 3. SELECTOR & DOM HELPERS
 // =========================================
+
+function isFilterAllowedPage() {
+  const path = window.location.pathname;
+  return path === "/" || path === "/results";
+}
 
 function queryFirst(parent, selectors) {
   if (!parent || !selectors) return null;
@@ -342,14 +431,15 @@ function injectPlaceholder(targetRow, category) {
 function formatScoreText(scoreValue, format) {
   switch (format) {
     case "decimal":
-      return `${(scoreValue / 10).toFixed(1)}/10`;
-    case "point":
       return `${Math.round(scoreValue / 10)}/10`;
-    case "star":
-      return `★ ${(scoreValue / 20).toFixed(1)}/5`;
     case "smiley": {
-      const emoji = scoreValue >= 70 ? "😊" : scoreValue >= 40 ? "😐" : "😞";
-      return `${emoji} ${scoreValue}%`;
+      // Smiley emoji only (no percentage)
+      return scoreValue >= 70 ? "😊" : scoreValue >= 40 ? "😐" : "😞";
+    }
+    case "stars": {
+      // Star unicodes (1 to 5 stars)
+      const count = Math.max(1, Math.min(5, Math.round(scoreValue / 20)));
+      return "🌟".repeat(count);
     }
     case "percentage":
     default:
@@ -371,15 +461,77 @@ function applyFinalScore(placeholderElement, scoreValue, cardElement) {
       cardElement.closest(
         "ytd-rich-item-renderer, ytd-video-renderer, yt-lockup-view-model, ytm-shorts-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, ytd-compact-video-renderer",
       ) || cardElement;
+
     if (hostCard) {
-      if (userSettings.hideLowScore && scoreValue < userSettings.lowScoreThreshold) {
-        hostCard.style.display = "none";
-        hostCard.dataset.ratioytHidden = "true";
-      } else if (!userSettings.hideLowScore && hostCard.dataset.ratioytHidden === "true") {
-        hostCard.style.display = "";
-        delete hostCard.dataset.ratioytHidden;
-      }
+      applyHideEffect(hostCard, scoreValue);
     }
+  }
+}
+
+function applyHideEffect(hostCard, scoreValue) {
+  const isAllowedPage = isFilterAllowedPage();
+  const shouldHide =
+    isAllowedPage && userSettings.hideLowScore && scoreValue < userSettings.lowScoreThreshold;
+
+  if (!shouldHide) {
+    // Restore video card completely
+    if (hostCard.dataset.ratioytHidden === "true") {
+      hostCard.style.display = "";
+      delete hostCard.dataset.ratioytHidden;
+    }
+    hostCard.classList.remove("ratioyt-blur-host", "ratioyt-unblurred");
+    const targetContent = hostCard.querySelector(".ratioyt-blur-target");
+    if (targetContent) targetContent.classList.remove("ratioyt-blur-target");
+    const overlay = hostCard.querySelector(".ratioyt-blur-overlay");
+    if (overlay) overlay.remove();
+    return;
+  }
+
+  // Handle Hiding Style
+  if (userSettings.hideStyle === "blur") {
+    // 1. Remove collapse display
+    if (hostCard.dataset.ratioytHidden === "true") {
+      hostCard.style.display = "";
+      delete hostCard.dataset.ratioytHidden;
+    }
+
+    // 2. Apply extreme blur & dim effect
+    hostCard.classList.add("ratioyt-blur-host");
+    const mainContent =
+      hostCard.querySelector(
+        "#content, .ytLockupViewModelHost, .shortsLockupViewModelHost, #dismissible",
+      ) || hostCard;
+    mainContent.classList.add("ratioyt-blur-target");
+
+    // 3. Create or update blur overlay div
+    let overlay = hostCard.querySelector(".ratioyt-blur-overlay");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.className = "ratioyt-blur-overlay";
+      overlay.innerHTML = `
+        <span class="ratioyt-blur-pill">🛡️ Hidden (${scoreValue}%)</span>
+        <span class="ratioyt-blur-sub">Click to preview</span>
+      `;
+      overlay.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        hostCard.classList.toggle("ratioyt-unblurred");
+      });
+      hostCard.appendChild(overlay);
+    } else {
+      const pill = overlay.querySelector(".ratioyt-blur-pill");
+      if (pill) pill.textContent = `🛡️ Hidden (${scoreValue}%)`;
+    }
+  } else {
+    // Style === 'collapse' (remove video & gap all together)
+    hostCard.classList.remove("ratioyt-blur-host", "ratioyt-unblurred");
+    const targetContent = hostCard.querySelector(".ratioyt-blur-target");
+    if (targetContent) targetContent.classList.remove("ratioyt-blur-target");
+    const overlay = hostCard.querySelector(".ratioyt-blur-overlay");
+    if (overlay) overlay.remove();
+
+    hostCard.style.display = "none";
+    hostCard.dataset.ratioytHidden = "true";
   }
 }
 
@@ -496,6 +648,8 @@ function scheduleScan() {
 const observer = new MutationObserver(() => scheduleScan());
 
 function startObserver() {
+  injectCustomStyles();
+
   const target = document.body || document.documentElement;
   if (!target) {
     window.addEventListener("DOMContentLoaded", () => startObserver(), { once: true });
@@ -521,8 +675,17 @@ window.addEventListener("yt-navigate-start", () => {
   }
 });
 
-window.addEventListener("yt-navigate-finish", () => scheduleScan());
-window.addEventListener("DOMContentLoaded", () => scheduleScan());
+window.addEventListener("yt-navigate-finish", () => {
+  injectCustomStyles();
+  applyGlobalBadgeVisibility();
+  scheduleScan();
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+  injectCustomStyles();
+  applyGlobalBadgeVisibility();
+  scheduleScan();
+});
 window.addEventListener("load", () => scheduleScan());
 window.addEventListener("popstate", () => scheduleScan());
 
