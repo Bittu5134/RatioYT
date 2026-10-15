@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/chrome-manifest.json",
   "manifest_version": 3,
   "version": "1.0.0",
-  "name": "ThumbScore",
+  "name": "RatioYT",
   "description": "Adds like/dislike ratio to YouTube videos.",
   "icons": {
     "16": "images/icon.png",
@@ -28,7 +28,8 @@
   ],
   "host_permissions": [
     "https://returnyoutubedislikeapi.com/*",
-    "https://raw.githubusercontent.com/*"
+    "https://raw.githubusercontent.com/*",
+    "https://raw.githack.com/*"
   ],
   "author": "Bittu"
 }

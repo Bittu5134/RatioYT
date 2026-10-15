@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "thumbscore",
+  "name": "ratioyt",
   "version": "1.0.0",
   "description": "Cross-browser extension that shows like/dislike ratio scores on YouTube video cards.",
   "license": "MIT",
