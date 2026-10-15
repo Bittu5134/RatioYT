@@ -1,6 +1,5 @@
 import defaultSelectors from "../config/selectors.json";
 
-// Active selectors and CSS values (fallback to local JSON, updated from GitHub)
 let activeSelectors = { ...defaultSelectors };
 
 // User preferences
@@ -20,7 +19,7 @@ let scanScheduled = false;
 // In-memory cache
 let scoreDB = {};
 
-const DB_NAME = "ThumbScoreDB";
+const DB_NAME = "RatioYT";
 const DB_STORE = "scores";
 const DB_VERSION = 1;
 let dbInstance = null;
@@ -36,7 +35,7 @@ async function initSelectors() {
     if (data.remoteSelectors && typeof data.remoteSelectors === "object") {
       activeSelectors = mergeConfigs(defaultSelectors, data.remoteSelectors);
       console.log(
-        "[ThumbScore] Loaded remote selectors from storage cache (v" +
+        "[RatioYT] Loaded remote selectors from storage cache (v" +
           (activeSelectors.version || "1.0.0") +
           ")",
       );
@@ -59,7 +58,7 @@ async function initSelectors() {
       fetchRemoteSelectors(activeSelectors.remoteConfigUrl);
     }
   } catch (err) {
-    console.warn("[ThumbScore] Error loading selectors from storage:", err);
+    console.warn("[RatioYT] Error loading selectors from storage:", err);
   }
 }
 
@@ -77,14 +76,14 @@ async function fetchRemoteSelectors(url) {
         selectorsLastFetched: Date.now(),
       });
       console.log(
-        "[ThumbScore] Updated selectors from GitHub successfully (v" +
+        "[RatioYT] Updated selectors from GitHub successfully (v" +
           (remoteConfig.version || "remote") +
           ")",
       );
     }
   } catch (err) {
     // Graceful fallback to local JSON
-    console.log("[ThumbScore] Using local selectors (remote update check failed:", err.message + ")");
+    console.log("[RatioYT] Using local selectors (remote update check failed:", err.message + ")");
   }
 }
 
@@ -111,9 +110,9 @@ function mergeConfigs(base, override) {
 // =========================================
 
 function updateRenderedBadges() {
-  const badges = document.querySelectorAll(".thumbscore-badge");
+  const badges = document.querySelectorAll(".ratioyt-badge, .thumbscore-badge");
   badges.forEach((badge) => {
-    const scoreVal = parseInt(badge.dataset.thumbscoreValue, 10);
+    const scoreVal = parseInt(badge.dataset.ratioytValue, 10);
     if (!isNaN(scoreVal)) {
       const card = badge.closest(
         "ytd-rich-item-renderer, ytd-video-renderer, yt-lockup-view-model, ytm-shorts-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, ytd-compact-video-renderer",
@@ -162,7 +161,7 @@ function initUserSettings() {
 
 function getStore(mode = "readonly") {
   if (!dbInstance) {
-    console.warn("[ThumbScore] Database connection is not ready yet.");
+    console.warn("[RatioYT] Database connection is not ready yet.");
     return null;
   }
   return dbInstance.transaction(DB_STORE, mode).objectStore(DB_STORE);
@@ -202,13 +201,13 @@ function initializeDatabase() {
         }
       });
 
-      console.log("[ThumbScore] Cache loaded:", activeCount, "valid entries");
+      console.log("[RatioYT] Cache loaded:", activeCount, "valid entries");
       startObserver();
     };
   };
 
   request.onerror = (event) => {
-    console.error("[ThumbScore] IndexedDB initialization failed:", event.target.error);
+    console.error("[RatioYT] IndexedDB initialization failed:", event.target.error);
     startObserver();
   };
 }
@@ -368,14 +367,19 @@ function injectPlaceholder(targetRow, category) {
 
   // Delimiter (ensure only one delimiter exists in this row)
   if (!nativeSeparator) {
-    let delimiter = targetRow.querySelector(".thumbscore-delimiter");
+    const existingDelims = targetRow.querySelectorAll(".ratioyt-delimiter, .thumbscore-delimiter");
+    for (let i = 1; i < existingDelims.length; i++) {
+      existingDelims[i].remove();
+    }
+
+    let delimiter = existingDelims[0] || null;
     if (!delimiter) {
       delimiter = document.createElement("span");
       const delimClasses = [
         ...(activeSelectors.classes?.delimiter?.[category] || [
           "ytContentMetadataViewModelDelimiter",
         ]),
-        "thumbscore-delimiter",
+        "ratioyt-delimiter",
       ];
       delimiter.className = delimClasses.join(" ");
       delimiter.textContent = activeSelectors.css?.delimiterText || " • ";
@@ -386,8 +390,13 @@ function injectPlaceholder(targetRow, category) {
     }
   }
 
-  // Score badge (re-use if already present, otherwise append)
-  let scoreSpan = targetRow.querySelector(".thumbscore-badge");
+  // Score badge (re-use if already present, clean up any duplicates)
+  const existingBadges = targetRow.querySelectorAll(".ratioyt-badge, .thumbscore-badge");
+  for (let i = 1; i < existingBadges.length; i++) {
+    existingBadges[i].remove();
+  }
+
+  let scoreSpan = existingBadges[0] || null;
   if (!scoreSpan) {
     scoreSpan = document.createElement("span");
     const scoreClasses = [
@@ -395,9 +404,10 @@ function injectPlaceholder(targetRow, category) {
         "ytAttributedStringHost",
         "ytContentMetadataViewModelMetadataText",
       ]),
-      ...(activeSelectors.classes?.badgeCustom || ["thumbscore-badge"]),
+      ...(activeSelectors.classes?.badgeCustom || ["ratioyt-badge"]),
     ];
     scoreSpan.className = scoreClasses.join(" ");
+    scoreSpan.classList.add("ratioyt-badge");
     scoreSpan.style.color = activeSelectors.css?.placeholderColor || "#888888";
     scoreSpan.textContent = activeSelectors.css?.placeholderText || "--%";
 
@@ -407,6 +417,7 @@ function injectPlaceholder(targetRow, category) {
 
     targetRow.appendChild(scoreSpan);
   } else {
+    scoreSpan.classList.add("ratioyt-badge");
     // Reset to placeholder if refreshed
     scoreSpan.style.color = activeSelectors.css?.placeholderColor || "#888888";
     scoreSpan.textContent = activeSelectors.css?.placeholderText || "--%";
@@ -436,7 +447,7 @@ function formatScoreText(scoreValue, format) {
 function applyFinalScore(placeholderElement, scoreValue, cardElement) {
   if (!placeholderElement) return;
 
-  placeholderElement.dataset.thumbscoreValue = String(scoreValue);
+  placeholderElement.dataset.ratioytValue = String(scoreValue);
   placeholderElement.textContent = formatScoreText(scoreValue, userSettings.scoringSystem);
 
   if (userSettings.scoringColour) {
@@ -454,10 +465,10 @@ function applyFinalScore(placeholderElement, scoreValue, cardElement) {
     if (hostCard) {
       if (userSettings.hideLowScore && scoreValue < userSettings.lowScoreThreshold) {
         hostCard.style.display = "none";
-        hostCard.dataset.thumbscoreHidden = "true";
-      } else if (!userSettings.hideLowScore && hostCard.dataset.thumbscoreHidden === "true") {
+        hostCard.dataset.ratioytHidden = "true";
+      } else if (!userSettings.hideLowScore && hostCard.dataset.ratioytHidden === "true") {
         hostCard.style.display = "";
-        delete hostCard.dataset.thumbscoreHidden;
+        delete hostCard.dataset.ratioytHidden;
       }
     }
   }
@@ -520,7 +531,7 @@ async function processQueue() {
 
     applyFinalScore(placeholderElement, fetchedScore, cardElement);
   } catch (err) {
-    console.warn("[ThumbScore] API fetch failed for", videoID, err.message);
+    console.warn("[RatioYT] API fetch failed for", videoID, err.message);
     placeholderElement.textContent = "--%";
   }
 }
@@ -544,12 +555,12 @@ function scanAndProcessCards() {
     if (!targetRow) return;
 
     // Skip if already processed for this specific video ID and badge exists
-    const existingBadge = targetRow.querySelector(".thumbscore-badge");
-    if (el.dataset.thumbScoreVideoId === videoId && existingBadge) {
+    const existingBadge = targetRow.querySelector(".ratioyt-badge, .thumbscore-badge");
+    if (el.dataset.ratioytVideoId === videoId && existingBadge) {
       return;
     }
 
-    el.dataset.thumbScoreVideoId = videoId;
+    el.dataset.ratioytVideoId = videoId;
     const placeholderElement = injectPlaceholder(targetRow, category);
     const cachedRecord = scoreDB[videoId];
 
@@ -580,14 +591,14 @@ function scanAndProcessCards() {
   }
 }
 
-// Debounce DOM scanning with requestAnimationFrame to prevent jank
+// Debounce DOM scanning to prevent UI lag while ensuring execution in all tab states
+let scanTimeout = null;
 function scheduleScan() {
-  if (scanScheduled) return;
-  scanScheduled = true;
-  requestAnimationFrame(() => {
-    scanScheduled = false;
+  if (scanTimeout) clearTimeout(scanTimeout);
+  scanTimeout = setTimeout(() => {
+    scanTimeout = null;
     scanAndProcessCards();
-  });
+  }, 60);
 }
 
 const observer = new MutationObserver(() => {
@@ -595,10 +606,20 @@ const observer = new MutationObserver(() => {
 });
 
 function startObserver() {
-  if (observerStarted) return;
+  const target = document.body || document.documentElement;
+  if (!target) {
+    window.addEventListener("DOMContentLoaded", () => startObserver(), { once: true });
+    return;
+  }
+
+  if (observerStarted) {
+    scheduleScan();
+    return;
+  }
   observerStarted = true;
-  scheduleScan();
-  observer.observe(document.body, { childList: true, subtree: true });
+
+  scanAndProcessCards();
+  observer.observe(target, { childList: true, subtree: true });
 }
 
 window.addEventListener("yt-navigate-start", () => {
@@ -609,6 +630,14 @@ window.addEventListener("yt-navigate-start", () => {
     queueIntervalId = null;
   }
 });
+
+window.addEventListener("yt-navigate-finish", () => {
+  scheduleScan();
+});
+
+window.addEventListener("DOMContentLoaded", () => scheduleScan());
+window.addEventListener("load", () => scheduleScan());
+window.addEventListener("popstate", () => scheduleScan());
 
 // Initialization
 initUserSettings();

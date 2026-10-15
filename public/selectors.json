@@ -1,6 +1,6 @@
 {
   "version": "1.0.1",
-  "remoteConfigUrl": "https://raw.githubusercontent.com/Bittu5134/ThumbScore/main/src/config/selectors.json",
+  "remoteConfigUrl": "https://raw.githack.com/Bittu5134/RatioYT/main/public/selectors.json",
   "containers": {
     "observe": [
       "yt-content-metadata-view-model",
@@ -120,7 +120,7 @@
       ]
     },
     "badgeCustom": [
-      "thumbscore-badge"
+      "ratioyt-badge"
     ]
   },
   "css": {
