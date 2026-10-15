@@ -1,64 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RatioYT Settings</title>
-    <link rel="stylesheet" href="./pico.css">
-    <link rel="stylesheet" href="./style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RatioYT Settings</title>
+  <link rel="stylesheet" href="./style.css">
 </head>
-
 <body>
+  <div class="popup-wrapper">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-row">
+        <span class="logo-icon">👎</span>
+        <div class="title-group">
+          <h1>RatioYT</h1>
+          <span class="version-badge">v1.0.0</span>
+        </div>
+      </div>
+      <p class="subtitle">YouTube Like/Dislike Ratings & Filter</p>
+      
+      <div class="quick-links">
+        <a href="https://thumbscore.bittu.dev" target="_blank" rel="noopener">Website</a>
+        <a href="https://www.patreon.com/cw/LazyBittu" target="_blank" rel="noopener" class="highlight">Donate</a>
+        <a href="https://discord.gg/CZdNvKaNNr" target="_blank" rel="noopener">Discord</a>
+      </div>
+    </header>
 
-    <div class="header-container">
-        <div class="logo">👎</div>
-        <h1>RatioYT</h1>
-        <div class="subtitle"><a href="https://bittu.dev" class="secondary">by Bittu</a></div>
-    </div>
+    <div class="divider"></div>
 
-    <div class="quick-links">
-        <a href="https://thumbscore.bittu.dev" target="_blank">Website</a>
-        <a href="https://www.patreon.com/cw/LazyBittu" target="_blank" class="highlight">Donate</a>
-        <a href="https://discord.gg/CZdNvKaNNr" target="_blank">Discord</a>
-    </div>
+    <main class="content">
+      <!-- Section: Display Settings -->
+      <section class="section">
+        <div class="section-title">Score Display</div>
 
-    <hr>
-
-    <main class="container">
-
-        <div class="setting-group">
-            <label for="scoringSystem" class="setting-label">Score Format</label>
-            <select id="scoringSystem" required>
-                <option value="percentage" selected>Percentage (55%)</option>
-                <option value="decimal">10 Point Decimal (5.5/10)</option>
-                <option value="point">10 Point (5/10)</option>
-                <option value="star">5 Star (3/5)</option>
-                <option value="smiley">3 Point Smiley :)</option>
+        <div class="control-group">
+          <label for="scoringSystem" class="control-label">Ratio Format</label>
+          <div class="select-wrapper">
+            <select id="scoringSystem">
+              <option value="percentage">100% (Percentage)</option>
+              <option value="decimal">9/10 (10 Point Ratio)</option>
+              <option value="smiley">Smiley (😊, 😐, 😞 — no %)</option>
+              <option value="stars">🌟🌟 (Star Unicodes)</option>
             </select>
+            <span class="select-arrow">▾</span>
+          </div>
+        </div>
 
-            <div class="setting-row">
-                <span class="setting-label">Coloured Scores</span>
-                <input type="checkbox" id="scoringColour" role="switch" checked>
+        <div class="switch-row">
+          <div class="switch-info">
+            <span class="switch-label">Score Colour</span>
+            <span class="switch-sub">Dynamic red-to-green spectrum</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="scoringColour" checked>
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div class="switch-row">
+          <div class="switch-info">
+            <span class="switch-label">Hide-Only Mode</span>
+            <span class="switch-sub">Filter videos silently (no badges on feed)</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="hideOnlyMode">
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- Section: Video Hiding -->
+      <section class="section">
+        <div class="section-title">Video Filter (Home & Search)</div>
+
+        <div class="switch-row">
+          <div class="switch-info">
+            <span class="switch-label">Hide Low Score Videos</span>
+            <span class="switch-sub">Automatically filter out low-rated videos</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="hideLowScore">
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <!-- Conditional Options when Hide Low Score is ON -->
+        <div id="filterOptions" class="nested-panel hidden">
+          <div class="slider-control">
+            <div class="slider-header">
+              <span class="control-label">Minimum Score Threshold</span>
+              <span id="thresholdValue" class="threshold-pill">25%</span>
             </div>
-
-            <div class="setting-row">
-                <span class="setting-label">Hide Low Score Videos</span>
-                <input type="checkbox" id="hideLowScore" role="switch">
+            <input type="range" id="lowScoreThreshold" min="0" max="100" value="25" step="1">
+            <div class="slider-ticks">
+              <span>0%</span>
+              <span>25%</span>
+              <span>50%</span>
+              <span>75%</span>
+              <span>100%</span>
             </div>
+          </div>
 
-            <div id="thresholdWrapper" class="threshold-container">
-                <div class="threshold-header">
-                    <span class="setting-label">Low Score Threshold</span>
-                    <strong id="thresholdValue" style="color: #ff9b9b;">20%</strong>
-                </div>
-                <input type="range" id="lowScoreThreshold" min="0" max="100" value="20">
+          <div class="control-group">
+            <label class="control-label">Hide Effect</label>
+            <div class="segmented-control">
+              <label class="segment">
+                <input type="radio" name="hideStyle" value="collapse" id="hideStyleCollapse" checked>
+                <span class="segment-btn">
+                  <span class="segment-icon">🚫</span>
+                  <span>Remove & Collapse</span>
+                </span>
+              </label>
+              <label class="segment">
+                <input type="radio" name="hideStyle" value="blur" id="hideStyleBlur">
+                <span class="segment-btn">
+                  <span class="segment-icon">🌫️</span>
+                  <span>Blur & Dim Overlay</span>
+                </span>
+              </label>
             </div>
-
-            <div class="version-tag">v1.0.0</div>
+          </div>
+        </div>
+      </section>
     </main>
 
-    <script src="main.js"></script>
-</body>
+    <footer class="footer">
+      <span class="author-tag">Crafted by <a href="https://bittu.dev" target="_blank" rel="noopener">Bittu</a></span>
+    </footer>
+  </div>
 
+  <script src="./main.js"></script>
+</body>
 </html>

@@ -1,57 +1,83 @@
 const UI = {
-  scoringSystem: document.getElementById('scoringSystem'),
-  scoringColour: document.getElementById('scoringColour'),
-  hideLowScore: document.getElementById('hideLowScore'),
-  thresholdWrapper: document.getElementById('thresholdWrapper'),
-  lowScoreThreshold: document.getElementById('lowScoreThreshold'),
-  thresholdValue: document.getElementById('thresholdValue')
+  scoringSystem: document.getElementById("scoringSystem"),
+  scoringColour: document.getElementById("scoringColour"),
+  hideOnlyMode: document.getElementById("hideOnlyMode"),
+  hideLowScore: document.getElementById("hideLowScore"),
+  filterOptions: document.getElementById("filterOptions"),
+  lowScoreThreshold: document.getElementById("lowScoreThreshold"),
+  thresholdValue: document.getElementById("thresholdValue"),
+  hideStyleCollapse: document.getElementById("hideStyleCollapse"),
+  hideStyleBlur: document.getElementById("hideStyleBlur"),
 };
 
-// 1. Load configuration on startup + execute visibility rules
-document.addEventListener('DOMContentLoaded', () => {
-  chrome.storage.local.get({
-    scoringSystem: 'percentage',
-    scoringColour: true,
-    hideLowScore: false,
-    lowScoreThreshold: 20
-  }, (config) => {
-    // Populate elements
+// Default settings
+const DEFAULTS = {
+  scoringSystem: "percentage",
+  scoringColour: true,
+  hideOnlyMode: false,
+  hideLowScore: false,
+  lowScoreThreshold: 25,
+  hideStyle: "collapse",
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  chrome.storage.local.get(DEFAULTS, (config) => {
+    // 1. Populate values
     UI.scoringSystem.value = config.scoringSystem;
     UI.scoringColour.checked = config.scoringColour;
+    UI.hideOnlyMode.checked = config.hideOnlyMode;
     UI.hideLowScore.checked = config.hideLowScore;
     UI.lowScoreThreshold.value = config.lowScoreThreshold;
     UI.thresholdValue.textContent = `${config.lowScoreThreshold}%`;
 
-    // Process initial dynamic views
-    toggleVisibility(UI.thresholdWrapper, config.hideLowScore);
+    if (config.hideStyle === "blur") {
+      UI.hideStyleBlur.checked = true;
+    } else {
+      UI.hideStyleCollapse.checked = true;
+    }
+
+    // 2. Initial visibility
+    toggleFilterOptions(config.hideLowScore);
   });
 });
 
-// Helper function to manage hidden states cleanly
-function toggleVisibility(element, shouldShow) {
-  if (shouldShow) {
-    element.classList.remove('hidden');
+function toggleFilterOptions(show) {
+  if (show) {
+    UI.filterOptions.classList.remove("hidden");
   } else {
-    element.classList.add('hidden');
+    UI.filterOptions.classList.add("hidden");
   }
 }
 
-// 2. Storage Mutation Listeners
-UI.scoringSystem.addEventListener('change', (e) => {
+// Event Listeners
+UI.scoringSystem.addEventListener("change", (e) => {
   chrome.storage.local.set({ scoringSystem: e.target.value });
 });
 
-UI.scoringColour.addEventListener('change', (e) => {
+UI.scoringColour.addEventListener("change", (e) => {
   chrome.storage.local.set({ scoringColour: e.target.checked });
 });
 
-UI.hideLowScore.addEventListener('change', (e) => {
-  toggleVisibility(UI.thresholdWrapper, e.target.checked);
-  chrome.storage.local.set({ hideLowScore: e.target.checked });
+UI.hideOnlyMode.addEventListener("change", (e) => {
+  chrome.storage.local.set({ hideOnlyMode: e.target.checked });
 });
 
-UI.lowScoreThreshold.addEventListener('input', (e) => {
-  const value = e.target.value;
-  UI.thresholdValue.textContent = `${value}%`;
-  chrome.storage.local.set({ lowScoreThreshold: parseInt(value, 10) });
+UI.hideLowScore.addEventListener("change", (e) => {
+  const isEnabled = e.target.checked;
+  toggleFilterOptions(isEnabled);
+  chrome.storage.local.set({ hideLowScore: isEnabled });
+});
+
+UI.lowScoreThreshold.addEventListener("input", (e) => {
+  const val = parseInt(e.target.value, 10);
+  UI.thresholdValue.textContent = `${val}%`;
+  chrome.storage.local.set({ lowScoreThreshold: val });
+});
+
+document.querySelectorAll("input[name='hideStyle']").forEach((radio) => {
+  radio.addEventListener("change", (e) => {
+    if (e.target.checked) {
+      chrome.storage.local.set({ hideStyle: e.target.value });
+    }
+  });
 });
