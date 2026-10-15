@@ -92,6 +92,16 @@ function injectCustomStyles() {
     .ratioyt-hide-badges .ratioyt-delimiter:not(.ratioyt-force-show) {
       display: none !important;
     }
+    .ratioyt-stars-wrap {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 1.5px !important;
+      vertical-align: -1.5px !important;
+    }
+    .ratioyt-star {
+      display: inline-block !important;
+      flex-shrink: 0 !important;
+    }
   `;
   (document.head || document.documentElement).appendChild(style);
 }
@@ -428,6 +438,24 @@ function injectPlaceholder(targetRow, category) {
   return badge;
 }
 
+function renderStarSvgs(scoreValue) {
+  const rating = Math.max(0, Math.min(5, Math.round((scoreValue / 100) * 10) / 2));
+  const fullStars = Math.floor(rating);
+  const hasHalf = rating % 1 !== 0;
+  const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+
+  const fullSvg = `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+  const halfSvg = `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor" opacity="0.25"/><path d="M12 2v15.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>`;
+  const emptySvg = `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" opacity="0.25"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+
+  let html = `<span class="ratioyt-stars-wrap" title="${rating} / 5 stars (${scoreValue}%)">`;
+  for (let i = 0; i < fullStars; i++) html += fullSvg;
+  if (hasHalf) html += halfSvg;
+  for (let i = 0; i < emptyStars; i++) html += emptySvg;
+  html += `</span>`;
+  return html;
+}
+
 function formatScoreText(scoreValue, format) {
   switch (format) {
     case "decimal":
@@ -435,11 +463,6 @@ function formatScoreText(scoreValue, format) {
     case "smiley": {
       // Smiley emoji only (no percentage)
       return scoreValue >= 70 ? "😊" : scoreValue >= 40 ? "😐" : "😞";
-    }
-    case "stars": {
-      // Star unicodes (1 to 5 stars)
-      const count = Math.max(1, Math.min(5, Math.round(scoreValue / 20)));
-      return "🌟".repeat(count);
     }
     case "percentage":
     default:
@@ -451,7 +474,13 @@ function applyFinalScore(placeholderElement, scoreValue, cardElement) {
   if (!placeholderElement) return;
 
   placeholderElement.dataset.ratioytValue = String(scoreValue);
-  placeholderElement.textContent = formatScoreText(scoreValue, userSettings.scoringSystem);
+
+  if (userSettings.scoringSystem === "stars") {
+    placeholderElement.innerHTML = renderStarSvgs(scoreValue);
+  } else {
+    placeholderElement.textContent = formatScoreText(scoreValue, userSettings.scoringSystem);
+  }
+
   placeholderElement.style.color = userSettings.scoringColour
     ? `hsl(${scoreValue * 1.2}, 100%, 45%)`
     : "";
