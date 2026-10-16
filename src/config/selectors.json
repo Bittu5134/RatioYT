@@ -1,5 +1,4 @@
 {
-  "version": "1.0.1",
   "remoteConfigUrl": "https://raw.githack.com/Bittu5134/RatioYT/main/public/selectors.json",
   "containers": {
     "observe": [
@@ -118,16 +117,12 @@
         "ytAttributedStringHost",
         "ytAttributedStringWhiteSpacePreWrap"
       ]
-    },
-    "badgeCustom": [
-      "ratioyt-badge"
-    ]
+    }
   },
   "css": {
     "delimiterText": " • ",
     "placeholderText": "--%",
     "placeholderColor": "#888888",
-    "badgeMargin": "",
     "scoreStyle": ""
   }
 }
