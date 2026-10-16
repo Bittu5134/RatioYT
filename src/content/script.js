@@ -10,12 +10,17 @@ let userSettings = {
   lowScoreThreshold: 25,
 };
 
-// Hidden videos are always blurred; hovering peeks at them briefly.
+// Hidden videos are always blurred; hovering reveals them while hovered.
 const PEEK_MS = 1000;
+
+// A failed lookup is retried after this long, so a transient API error
+// doesn't leave a "--%" placeholder stuck until the next navigation.
+const RETRY_AFTER_MS = 5 * 60 * 1000;
 
 let elementQueue = [];
 let queueIntervalId = null;
 let pendingVideos = new Set();
+let failedVideos = new Map();
 let scanTimeout = null;
 let scoreDB = {};
 
@@ -242,6 +247,8 @@ function initializeDatabase() {
 
       startObserver();
     };
+
+    getAllRequest.onerror = () => startObserver();
   };
 
   request.onerror = (event) => {
@@ -454,6 +461,13 @@ function applyFinalScore(placeholderElement, scoreValue, cardElement) {
 
   placeholderElement.dataset.ratioytValue = String(scoreValue);
 
+  // Deleted/unknown videos get a neutral "N/A" and are never hidden.
+  if (scoreValue < 0) {
+    placeholderElement.textContent = "N/A";
+    placeholderElement.style.color = "";
+    return;
+  }
+
   if (userSettings.scoringSystem === "stars") {
     placeholderElement.innerHTML = renderStarSvgs(scoreValue);
   } else {
@@ -576,11 +590,13 @@ async function processQueue() {
     const votes = await response.json();
 
     if (votes.deleted || (votes.likes === undefined && votes.dislikes === undefined)) {
-      placeholderElement.textContent = "N/A";
+      // Cache deleted/unknown videos so they aren't refetched on every navigation.
+      saveToIndexDB(videoId, -1, Date.now() + 7 * 24 * 60 * 60 * 1000);
+      applyFinalScore(placeholderElement, -1, cardElement);
       return;
     }
 
-    const total = votes.likes + votes.dislikes;
+    const total = (votes.likes ?? 0) + (votes.dislikes ?? 0);
     const score = total > 0 ? Math.round((votes.likes / total) * 100) : 0;
     const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
 
@@ -588,6 +604,7 @@ async function processQueue() {
     applyFinalScore(placeholderElement, score, cardElement);
   } catch (err) {
     console.warn("[RatioYT] Failed score for", videoId, err.message);
+    failedVideos.set(videoId, Date.now());
     placeholderElement.textContent = "--%";
   }
 }
@@ -612,11 +629,15 @@ function scanAndProcessCards() {
 
     const existingBadge = targetRow.querySelector(".ratioyt-badge");
     if (el.dataset.ratioytVideoId === videoId && existingBadge) {
-      return;
+      // Scored, in flight, or recently failed - nothing to do yet.
+      if (existingBadge.dataset.ratioytValue) return;
+      if (pendingVideos.has(videoId)) return;
+      const failedAt = failedVideos.get(videoId) || 0;
+      if (Date.now() - failedAt < RETRY_AFTER_MS) return;
     }
 
     el.dataset.ratioytVideoId = videoId;
-    const badge = injectPlaceholder(targetRow, category);
+    const badge = existingBadge || injectPlaceholder(targetRow, category);
     const cachedRecord = scoreDB[videoId];
 
     if (cachedRecord !== undefined && cachedRecord.expiresAt > Date.now()) {
