@@ -2,13 +2,14 @@ import defaultSelectors from "../config/selectors.json";
 
 let activeSelectors = { ...defaultSelectors };
 
-let userSettings = {
+const DEFAULTS = {
   scoringSystem: "percentage",
   scoringColour: true,
   hideOnlyMode: false,
   hideLowScore: false,
   lowScoreThreshold: 25,
 };
+let userSettings = { ...DEFAULTS };
 
 // Hidden videos are always blurred; hovering reveals them while hovered.
 const PEEK_MS = 1000;
@@ -16,6 +17,20 @@ const PEEK_MS = 1000;
 // A failed lookup is retried after this long, so a transient API error
 // doesn't leave a "--%" placeholder stuck until the next navigation.
 const RETRY_AFTER_MS = 5 * 60 * 1000;
+
+const SELECTOR_REFRESH_MS = 6 * 60 * 60 * 1000;
+
+// The card types a video badge can live in, used to find the card that
+// gets blurred when a video is hidden.
+const HOST_CARD_SELECTOR =
+  "ytd-rich-item-renderer, ytd-video-renderer, yt-lockup-view-model, ytm-shorts-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, ytd-compact-video-renderer";
+
+const TARGET_ROW_KEYS = {
+  shorts: ["shortsMetadata"],
+  search: ["searchMetadata"],
+  playlist: ["playlistMetadata", "lockupMetadata"],
+  lockup: ["searchMetadata", "lockupMetadata", "playlistMetadata"],
+};
 
 let elementQueue = [];
 let queueIntervalId = null;
@@ -28,7 +43,6 @@ const DB_NAME = "RatioYT";
 const DB_STORE = "scores";
 const DB_VERSION = 1;
 let dbInstance = null;
-let observerStarted = false;
 
 // =========================================
 // 1. STYLES & CONFIG
@@ -91,23 +105,37 @@ function injectCustomStyles() {
   (document.head || document.documentElement).appendChild(style);
 }
 
+// Remote selector lists can contain invalid entries. Filter them out once,
+// at load time, so the hot paths can call querySelector/matches bare.
+function sanitizeSelectors(config) {
+  const probe = document.createElement("div");
+  const keepValid = (list) =>
+    (Array.isArray(list) ? list : [list]).filter((selector) => {
+      try {
+        probe.querySelector(selector);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+
+  for (const section of ["containers", "links", "targetRows"]) {
+    if (!config[section]) continue;
+    for (const key of Object.keys(config[section])) {
+      config[section][key] = keepValid(config[section][key]);
+    }
+  }
+  return config;
+}
+
 async function initSelectors() {
   try {
     const data = await chrome.storage.local.get(["remoteSelectors", "selectorsLastFetched"]);
     if (data.remoteSelectors && typeof data.remoteSelectors === "object") {
-      activeSelectors = mergeConfigs(defaultSelectors, data.remoteSelectors);
-    } else {
-      try {
-        const localUrl = chrome.runtime.getURL("selectors.json");
-        const res = await fetch(localUrl);
-        if (res.ok) {
-          activeSelectors = mergeConfigs(defaultSelectors, await res.json());
-        }
-      } catch (e) {}
+      activeSelectors = mergeConfigs(defaultSelectors, sanitizeSelectors(data.remoteSelectors));
     }
 
-    const lastFetched = data.selectorsLastFetched || 0;
-    if (Date.now() - lastFetched > 6 * 60 * 60 * 1000) {
+    if (Date.now() - (data.selectorsLastFetched || 0) > SELECTOR_REFRESH_MS) {
       fetchRemoteSelectors(activeSelectors.remoteConfigUrl);
     }
   } catch (err) {
@@ -123,89 +151,67 @@ async function fetchRemoteSelectors(url) {
     const remoteConfig = await response.json();
 
     if (remoteConfig?.containers && remoteConfig?.targetRows) {
-      activeSelectors = mergeConfigs(defaultSelectors, remoteConfig);
-      await chrome.storage.local.set({
+      activeSelectors = mergeConfigs(defaultSelectors, sanitizeSelectors(remoteConfig));
+      chrome.storage.local.set({
         remoteSelectors: remoteConfig,
         selectorsLastFetched: Date.now(),
       });
     }
   } catch (err) {
-    console.log("[RatioYT] Remote selectors fetch failed, using local:", err.message);
+    console.warn("[RatioYT] Remote selector fetch failed, using local:", err.message);
   }
 }
 
 function mergeConfigs(base, override) {
   if (!override) return base;
-  return {
-    ...base,
-    ...override,
-    containers: { ...base.containers, ...(override.containers || {}) },
-    links: { ...base.links, ...(override.links || {}) },
-    targetRows: { ...base.targetRows, ...(override.targetRows || {}) },
-    classes: {
-      ...base.classes,
-      ...(override.classes || {}),
-      delimiter: { ...base.classes?.delimiter, ...(override.classes?.delimiter || {}) },
-      score: { ...base.classes?.score, ...(override.classes?.score || {}) },
-    },
-    css: { ...base.css, ...(override.css || {}) },
-  };
+  const merged = { ...base, ...override };
+  for (const key of ["containers", "links", "targetRows", "classes", "css"]) {
+    merged[key] = { ...base[key], ...override[key] };
+  }
+  return merged;
 }
 
 function initUserSettings() {
-  chrome.storage.local.get(
-    {
-      scoringSystem: "percentage",
-      scoringColour: true,
-      hideOnlyMode: false,
-      hideLowScore: false,
-      lowScoreThreshold: 25,
-    },
-    (config) => {
-      userSettings = { ...userSettings, ...config };
-      applyGlobalBadgeVisibility();
-    },
-  );
+  chrome.storage.local.get(DEFAULTS, (config) => {
+    userSettings = { ...userSettings, ...config };
+    applyGlobalBadgeVisibility();
+  });
 
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === "local") {
-      let settingsChanged = false;
-      for (const [key, change] of Object.entries(changes)) {
-        if (key in userSettings) {
-          userSettings[key] = change.newValue;
-          settingsChanged = true;
-        }
-      }
-      if (changes.remoteSelectors?.newValue) {
-        activeSelectors = mergeConfigs(defaultSelectors, changes.remoteSelectors.newValue);
+    if (area !== "local") return;
+    let settingsChanged = false;
+
+    for (const [key, change] of Object.entries(changes)) {
+      if (key in DEFAULTS) {
+        userSettings[key] = change.newValue;
         settingsChanged = true;
       }
-      if (settingsChanged) {
-        applyGlobalBadgeVisibility();
-        updateRenderedBadges();
-      }
+    }
+    if (changes.remoteSelectors?.newValue) {
+      activeSelectors = mergeConfigs(
+        defaultSelectors,
+        sanitizeSelectors(changes.remoteSelectors.newValue),
+      );
+      settingsChanged = true;
+    }
+    if (settingsChanged) {
+      applyGlobalBadgeVisibility();
+      updateRenderedBadges();
     }
   });
 }
 
 function applyGlobalBadgeVisibility() {
-  const root = document.documentElement;
-  if (userSettings.hideOnlyMode) {
-    root.classList.add("ratioyt-hide-badges");
-  } else {
-    root.classList.remove("ratioyt-hide-badges");
-  }
+  document.documentElement.classList.toggle(
+    "ratioyt-hide-badges",
+    userSettings.hideOnlyMode,
+  );
 }
 
 function updateRenderedBadges() {
   document.querySelectorAll(".ratioyt-badge").forEach((badge) => {
-    const scoreVal = parseInt(badge.dataset.ratioytValue, 10);
-    if (!isNaN(scoreVal)) {
-      const card = badge.closest(
-        "ytd-rich-item-renderer, ytd-video-renderer, yt-lockup-view-model, ytm-shorts-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, ytd-compact-video-renderer",
-      );
-      applyFinalScore(badge, scoreVal, card);
-    }
+    const scoreValue = parseInt(badge.dataset.ratioytValue, 10);
+    if (!isNaN(scoreValue)) applyFinalScore(badge, scoreValue, null);
   });
 }
 
@@ -230,21 +236,17 @@ function initializeDatabase() {
 
   request.onsuccess = (event) => {
     dbInstance = event.target.result;
-    const store = getStore();
-    const getAllRequest = store.getAll();
+    const getAllRequest = getStore().getAll();
 
     getAllRequest.onsuccess = () => {
-      const allEntries = getAllRequest.result || [];
       const now = Date.now();
-
-      allEntries.forEach((entry) => {
+      for (const entry of getAllRequest.result || []) {
         if (entry.expiresAt > now) {
           scoreDB[entry.videoId] = { score: entry.score, expiresAt: entry.expiresAt };
         } else {
           deleteCacheRecord(entry.videoId);
         }
-      });
-
+      }
       startObserver();
     };
 
@@ -252,22 +254,19 @@ function initializeDatabase() {
   };
 
   request.onerror = (event) => {
-    console.error("[RatioYT] IndexedDB error:", event.target.error);
+    console.warn("[RatioYT] IndexedDB error:", event.target.error);
     startObserver();
   };
 }
 
 function saveToIndexDB(videoId, scoreValue, expiresAt) {
-  const store = getStore("readwrite");
-  if (!store) return;
   scoreDB[videoId] = { score: scoreValue, expiresAt };
-  store.put({ videoId, score: scoreValue, expiresAt });
+  getStore("readwrite")?.put({ videoId, score: scoreValue, expiresAt });
 }
 
 function deleteCacheRecord(videoId) {
   delete scoreDB[videoId];
-  const store = getStore("readwrite");
-  if (store) store.delete(videoId);
+  getStore("readwrite")?.delete(videoId);
 }
 
 // =========================================
@@ -284,41 +283,26 @@ function queryFirst(parent, selectors) {
   const list = Array.isArray(selectors) ? selectors : [selectors];
   let fallback = null;
   for (const selector of list) {
-    try {
-      const el = parent.querySelector(selector);
-      if (el) {
-        if (el.hasAttribute("hidden") || el.getAttribute("aria-hidden") === "true") {
-          if (!fallback) fallback = el;
-          continue;
-        }
-        return el;
-      }
-    } catch (e) {}
+    const el = parent.querySelector(selector);
+    if (!el) continue;
+    if (el.hasAttribute("hidden") || el.getAttribute("aria-hidden") === "true") {
+      fallback ??= el;
+    } else {
+      return el;
+    }
   }
   return fallback;
 }
 
 function isMatch(el, selectors) {
-  if (!el || !selectors || !el.matches) return false;
+  if (!el || !selectors) return false;
   const list = Array.isArray(selectors) ? selectors : [selectors];
-  return list.some((selector) => {
-    try {
-      return el.matches(selector);
-    } catch (e) {
-      return false;
-    }
-  });
+  return list.some((selector) => el.matches(selector));
 }
 
 function isElementInViewport(el) {
-  if (!el) return false;
   const rect = el.getBoundingClientRect();
-  return (
-    rect.bottom >= 0 &&
-    rect.right >= 0 &&
-    rect.top <= (window.innerHeight || document.documentElement.clientHeight) &&
-    rect.left <= (window.innerWidth || document.documentElement.clientWidth)
-  );
+  return rect.bottom >= 0 && rect.right >= 0 && rect.top <= innerHeight && rect.left <= innerWidth;
 }
 
 function getCardCategory(el) {
@@ -329,61 +313,42 @@ function getCardCategory(el) {
 }
 
 function getVideoId(el, category) {
-  try {
-    if (category === "shorts") {
-      const link = queryFirst(el, activeSelectors.links.shorts);
-      if (!link) return null;
-      const href = link.getAttribute("href") || "";
-      const shortPart = href.split("/shorts/")[1];
-      return shortPart ? shortPart.split("?")[0] : null;
-    }
+  if (category === "shorts") {
+    const href = queryFirst(el, activeSelectors.links.shorts)?.getAttribute("href") || "";
+    const shortId = href.split("/shorts/")[1];
+    return shortId ? shortId.split(/[?#]/)[0] : null;
+  }
 
-    let link = queryFirst(el, activeSelectors.links.regular);
-    if (!link && activeSelectors.links.lockupParents) {
-      for (const parentSelector of activeSelectors.links.lockupParents) {
-        const parentHost = el.closest(parentSelector);
-        if (parentHost) {
-          link = queryFirst(parentHost, activeSelectors.links.regular);
-          if (link) break;
-        }
+  let link = queryFirst(el, activeSelectors.links.regular);
+  if (!link) {
+    for (const parentSelector of activeSelectors.links.lockupParents) {
+      const parentHost = el.closest(parentSelector);
+      if (parentHost) {
+        link = queryFirst(parentHost, activeSelectors.links.regular);
+        if (link) break;
       }
     }
-
-    if (!link) return null;
-    const href = link.getAttribute("href") || "";
-    return new URLSearchParams(href.split("?")[1] || "").get("v");
-  } catch (err) {
-    return null;
   }
+
+  if (!link) return null;
+  return new URL(link.getAttribute("href") || "", location.origin).searchParams.get("v");
 }
 
 function getTargetRow(el, category) {
-  if (category === "shorts") {
-    return queryFirst(el, activeSelectors.targetRows.shortsMetadata);
-  }
-  if (category === "search") {
-    return queryFirst(el, activeSelectors.targetRows.searchMetadata);
-  }
-  if (category === "playlist") {
-    return (
-      queryFirst(el, activeSelectors.targetRows.playlistMetadata) ||
-      queryFirst(el, activeSelectors.targetRows.lockupMetadata)
+  if (category === "lockup") {
+    const rows = el.querySelectorAll(
+      activeSelectors.targetRows.lockupMetadataRows?.join(", ") ||
+        ".ytContentMetadataViewModelMetadataRow",
     );
+    if (rows.length >= 2) return rows[1];
+    if (rows.length === 1) return rows[0];
   }
 
-  const rows = el.querySelectorAll(
-    activeSelectors.targetRows.lockupMetadataRows?.join(", ") ||
-      ".ytContentMetadataViewModelMetadataRow",
-  );
-  if (rows && rows.length > 0) {
-    return rows.length >= 2 ? rows[1] : rows[0];
+  for (const key of TARGET_ROW_KEYS[category]) {
+    const row = queryFirst(el, activeSelectors.targetRows[key]);
+    if (row) return row;
   }
-
-  return (
-    queryFirst(el, activeSelectors.targetRows.searchMetadata) ||
-    queryFirst(el, activeSelectors.targetRows.lockupMetadata) ||
-    queryFirst(el, activeSelectors.targetRows.playlistMetadata)
-  );
+  return null;
 }
 
 // =========================================
@@ -424,20 +389,22 @@ function injectPlaceholder(targetRow, category) {
   return badge;
 }
 
+const STAR_PATH = "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z";
+const STAR_SVG = {
+  full: `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="${STAR_PATH}"/></svg>`,
+  half: `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12"><path d="${STAR_PATH}" fill="currentColor" opacity="0.25"/><path d="M12 2v15.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>`,
+  empty: `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" opacity="0.25"><path d="${STAR_PATH}"/></svg>`,
+};
+
 function renderStarSvgs(scoreValue) {
   const rating = Math.max(0, Math.min(5, Math.round((scoreValue / 100) * 10) / 2));
   const fullStars = Math.floor(rating);
   const hasHalf = rating % 1 !== 0;
-  const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
-
-  const fullSvg = `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
-  const halfSvg = `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor" opacity="0.25"/><path d="M12 2v15.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>`;
-  const emptySvg = `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" opacity="0.25"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
 
   let html = `<span class="ratioyt-stars-wrap" title="${rating} / 5 stars (${scoreValue}%)">`;
-  for (let i = 0; i < fullStars; i++) html += fullSvg;
-  if (hasHalf) html += halfSvg;
-  for (let i = 0; i < emptyStars; i++) html += emptySvg;
+  html += STAR_SVG.full.repeat(fullStars);
+  if (hasHalf) html += STAR_SVG.half;
+  html += STAR_SVG.empty.repeat(5 - fullStars - (hasHalf ? 1 : 0));
   html += `</span>`;
   return html;
 }
@@ -446,83 +413,64 @@ function formatScoreText(scoreValue, format) {
   switch (format) {
     case "decimal":
       return `${Math.round(scoreValue / 10)}/10`;
-    case "smiley": {
-      // Smiley emoji only (no percentage)
+    case "smiley":
       return scoreValue >= 70 ? "😊" : scoreValue >= 40 ? "😐" : "😞";
-    }
     case "percentage":
     default:
       return `${scoreValue}%`;
   }
 }
 
-function applyFinalScore(placeholderElement, scoreValue, cardElement) {
-  if (!placeholderElement) return;
-
-  placeholderElement.dataset.ratioytValue = String(scoreValue);
+function applyFinalScore(badge, scoreValue, cardElement) {
+  badge.dataset.ratioytValue = String(scoreValue);
+  const hostCard = (cardElement || badge).closest(HOST_CARD_SELECTOR);
 
   // Deleted/unknown videos get a neutral "N/A" and are never hidden.
   if (scoreValue < 0) {
-    placeholderElement.textContent = "N/A";
-    placeholderElement.style.color = "";
+    badge.textContent = "N/A";
+    badge.style.color = "";
+    if (hostCard) clearHideEffect(hostCard);
     return;
   }
 
   if (userSettings.scoringSystem === "stars") {
-    placeholderElement.innerHTML = renderStarSvgs(scoreValue);
+    badge.innerHTML = renderStarSvgs(scoreValue);
   } else {
-    placeholderElement.textContent = formatScoreText(scoreValue, userSettings.scoringSystem);
+    badge.textContent = formatScoreText(scoreValue, userSettings.scoringSystem);
   }
 
-  placeholderElement.style.color = userSettings.scoringColour
-    ? `hsl(${scoreValue * 1.2}, 100%, 45%)`
-    : "";
+  badge.style.color = userSettings.scoringColour ? `hsl(${scoreValue * 1.2}, 100%, 45%)` : "";
+  if (hostCard) applyHideEffect(hostCard, scoreValue);
+}
 
-  if (cardElement) {
-    const hostCard =
-      cardElement.closest(
-        "ytd-rich-item-renderer, ytd-video-renderer, yt-lockup-view-model, ytm-shorts-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, ytd-compact-video-renderer",
-      ) || cardElement;
-
-    if (hostCard) {
-      applyHideEffect(hostCard, scoreValue);
-    }
-  }
+function clearHideEffect(hostCard) {
+  hostCard.classList.remove("ratioyt-blur-host", "ratioyt-peek", "ratioyt-hint-gone");
+  // The blur target can be the card itself, which querySelector can't see.
+  hostCard.classList.remove("ratioyt-blur-target");
+  hostCard.querySelector(".ratioyt-blur-target")?.classList.remove("ratioyt-blur-target");
+  hostCard.querySelector(".ratioyt-peek-hint")?.remove();
 }
 
 function applyHideEffect(hostCard, scoreValue) {
-  const isAllowedPage = isFilterAllowedPage();
   const shouldHide =
-    isAllowedPage && userSettings.hideLowScore && scoreValue < userSettings.lowScoreThreshold;
+    isFilterAllowedPage() &&
+    userSettings.hideLowScore &&
+    scoreValue < userSettings.lowScoreThreshold;
 
   if (!shouldHide) {
-    // Restore video card completely
-    if (hostCard.dataset.ratioytHidden === "true") {
-      hostCard.style.display = "";
-      delete hostCard.dataset.ratioytHidden;
-    }
-    hostCard.classList.remove("ratioyt-blur-host", "ratioyt-peek", "ratioyt-hint-gone");
-    const targetContent = hostCard.querySelector(".ratioyt-blur-target");
-    if (targetContent) targetContent.classList.remove("ratioyt-blur-target");
-    const hint = hostCard.querySelector(".ratioyt-peek-hint");
-    if (hint) hint.remove();
+    clearHideEffect(hostCard);
     return;
   }
 
   // Hidden videos are only blurred — nothing is placed on top of them.
-  if (hostCard.dataset.ratioytHidden === "true") {
-    hostCard.style.display = "";
-    delete hostCard.dataset.ratioytHidden;
-  }
   hostCard.classList.add("ratioyt-blur-host");
-
   const mainContent =
     hostCard.querySelector(
       "#content, .ytLockupViewModelHost, .shortsLockupViewModelHost, #dismissible",
     ) || hostCard;
   mainContent.classList.add("ratioyt-blur-target");
 
-  // A tiny, quiet hint that only breathes in during the hover peek.
+  // A tiny, quiet hint that only breathes in while the card is revealed.
   if (!mainContent.querySelector(".ratioyt-peek-hint")) {
     const hint = document.createElement("div");
     hint.className = "ratioyt-peek-hint";
@@ -557,33 +505,22 @@ function applyHideEffect(hostCard, scoreValue) {
 // =========================================
 
 async function processQueue() {
-  let currentTask = null;
   while (elementQueue.length > 0) {
-    const candidate = elementQueue.shift();
-    if (candidate.placeholderElement && document.body.contains(candidate.placeholderElement)) {
-      currentTask = candidate;
-      break;
-    }
-    pendingVideos.delete(candidate.videoId);
+    const task = elementQueue.shift();
+    pendingVideos.delete(task.videoId);
+
+    if (!task.placeholderElement || !document.body.contains(task.placeholderElement)) continue;
+    await fetchScore(task);
+    return; // one lookup per interval tick
   }
 
-  if (!currentTask) {
-    if (elementQueue.length === 0 && queueIntervalId) {
-      clearInterval(queueIntervalId);
-      queueIntervalId = null;
-    }
-    return;
+  if (queueIntervalId) {
+    clearInterval(queueIntervalId);
+    queueIntervalId = null;
   }
+}
 
-  const { videoId, placeholderElement, cardElement } = currentTask;
-  pendingVideos.delete(videoId);
-
-  const cachedRecord = scoreDB[videoId];
-  if (cachedRecord !== undefined && cachedRecord.expiresAt > Date.now()) {
-    applyFinalScore(placeholderElement, cachedRecord.score, cardElement);
-    return;
-  }
-
+async function fetchScore({ videoId, placeholderElement, cardElement }) {
   try {
     const response = await fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${videoId}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -598,9 +535,8 @@ async function processQueue() {
 
     const total = (votes.likes ?? 0) + (votes.dislikes ?? 0);
     const score = total > 0 ? Math.round((votes.likes / total) * 100) : 0;
-    const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
 
-    saveToIndexDB(videoId, score, expiresAt);
+    saveToIndexDB(videoId, score, Date.now() + 7 * 24 * 60 * 60 * 1000);
     applyFinalScore(placeholderElement, score, cardElement);
   } catch (err) {
     console.warn("[RatioYT] Failed score for", videoId, err.message);
@@ -617,9 +553,7 @@ function scanAndProcessCards() {
   const selectorList = activeSelectors.containers?.observe || [];
   if (selectorList.length === 0) return;
 
-  const elements = document.querySelectorAll(selectorList.join(", "));
-
-  elements.forEach((el) => {
+  document.querySelectorAll(selectorList.join(", ")).forEach((el) => {
     const category = getCardCategory(el);
     const videoId = getVideoId(el, category);
     if (!videoId) return;
@@ -632,12 +566,11 @@ function scanAndProcessCards() {
       // Scored, in flight, or recently failed - nothing to do yet.
       if (existingBadge.dataset.ratioytValue) return;
       if (pendingVideos.has(videoId)) return;
-      const failedAt = failedVideos.get(videoId) || 0;
-      if (Date.now() - failedAt < RETRY_AFTER_MS) return;
+      if (Date.now() - (failedVideos.get(videoId) || 0) < RETRY_AFTER_MS) return;
     }
 
     el.dataset.ratioytVideoId = videoId;
-    const badge = existingBadge || injectPlaceholder(targetRow, category);
+    const badge = injectPlaceholder(targetRow, category);
     const cachedRecord = scoreDB[videoId];
 
     if (cachedRecord !== undefined && cachedRecord.expiresAt > Date.now()) {
@@ -647,11 +580,8 @@ function scanAndProcessCards() {
       if (!pendingVideos.has(videoId)) {
         pendingVideos.add(videoId);
         const task = { videoId, placeholderElement: badge, cardElement: el };
-        if (isElementInViewport(badge)) {
-          elementQueue.unshift(task);
-        } else {
-          elementQueue.push(task);
-        }
+        if (isElementInViewport(badge)) elementQueue.unshift(task);
+        else elementQueue.push(task);
       }
     }
   });
@@ -673,21 +603,8 @@ const observer = new MutationObserver(() => scheduleScan());
 
 function startObserver() {
   injectCustomStyles();
-
-  const target = document.body || document.documentElement;
-  if (!target) {
-    window.addEventListener("DOMContentLoaded", () => startObserver(), { once: true });
-    return;
-  }
-
-  if (observerStarted) {
-    scheduleScan();
-    return;
-  }
-  observerStarted = true;
-
   scanAndProcessCards();
-  observer.observe(target, { childList: true, subtree: true });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 window.addEventListener("yt-navigate-start", () => {
@@ -699,19 +616,7 @@ window.addEventListener("yt-navigate-start", () => {
   }
 });
 
-window.addEventListener("yt-navigate-finish", () => {
-  injectCustomStyles();
-  applyGlobalBadgeVisibility();
-  scheduleScan();
-});
-
-window.addEventListener("DOMContentLoaded", () => {
-  injectCustomStyles();
-  applyGlobalBadgeVisibility();
-  scheduleScan();
-});
-window.addEventListener("load", () => scheduleScan());
-window.addEventListener("popstate", () => scheduleScan());
+window.addEventListener("yt-navigate-finish", () => scheduleScan());
 
 initUserSettings();
 initSelectors().then(() => initializeDatabase());
