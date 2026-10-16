@@ -6,8 +6,6 @@ const UI = {
   filterOptions: document.getElementById("filterOptions"),
   lowScoreThreshold: document.getElementById("lowScoreThreshold"),
   thresholdValue: document.getElementById("thresholdValue"),
-  hideStyleCollapse: document.getElementById("hideStyleCollapse"),
-  hideStyleBlur: document.getElementById("hideStyleBlur"),
 };
 
 // Default settings
@@ -17,7 +15,6 @@ const DEFAULTS = {
   hideOnlyMode: false,
   hideLowScore: false,
   lowScoreThreshold: 25,
-  hideStyle: "collapse",
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -29,12 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
     UI.hideLowScore.checked = config.hideLowScore;
     UI.lowScoreThreshold.value = config.lowScoreThreshold;
     UI.thresholdValue.textContent = `${config.lowScoreThreshold}%`;
-
-    if (config.hideStyle === "blur") {
-      UI.hideStyleBlur.checked = true;
-    } else {
-      UI.hideStyleCollapse.checked = true;
-    }
 
     // 2. Initial visibility
     toggleFilterOptions(config.hideLowScore);
@@ -72,12 +63,4 @@ UI.lowScoreThreshold.addEventListener("input", (e) => {
   const val = parseInt(e.target.value, 10);
   UI.thresholdValue.textContent = `${val}%`;
   chrome.storage.local.set({ lowScoreThreshold: val });
-});
-
-document.querySelectorAll("input[name='hideStyle']").forEach((radio) => {
-  radio.addEventListener("change", (e) => {
-    if (e.target.checked) {
-      chrome.storage.local.set({ hideStyle: e.target.value });
-    }
-  });
 });

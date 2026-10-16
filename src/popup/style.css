@@ -1,148 +1,93 @@
-/* =========================================
-   RatioYT Settings Popup Stylesheet
-   Crafted from scratch with zero dependencies
-   ========================================= */
+/* ==============================================
+   RatioYT popup — Catppuccin Mocha, flat
+   ============================================== */
 
 :root {
-  --bg-primary: #121214;
-  --bg-secondary: #1a1a1e;
-  --bg-tertiary: #242429;
-  --bg-hover: #2f2f36;
-  --border-subtle: #2d2d34;
-  --border-strong: #3e3e48;
-  --text-primary: #f4f4f6;
-  --text-secondary: #9e9ea7;
-  --text-muted: #6e6e77;
-  --accent-red: #ff3b30;
-  --accent-red-hover: #ff453a;
-  --accent-red-glow: rgba(255, 59, 48, 0.25);
-  --accent-blue: #0a84ff;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --base:     #1e1e2e;
+  --mantle:   #181825;
+  --crust:    #11111b;
+  --surface0: #313244;
+  --surface1: #45475a;
+  --surface2: #585b70;
+  --overlay0: #6c7086;
+  --overlay1: #7f849c;
+  --subtext0: #a6adc8;
+  --text:     #cdd6f4;
+
+  --mauve:     #cba6f7;
+  --pink:      #f5c2e7;
+  --rosewater: #f5e0dc;
+  --green:     #a6e3a1;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  height: fit-content;
 }
 
 body {
   width: 320px;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  height: fit-content;
+  background: var(--base);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.5;
   user-select: none;
   -webkit-font-smoothing: antialiased;
+  display: block;
+  overflow: hidden;
 }
 
-.popup-wrapper {
-  padding: 16px;
+/* ── Wrapper ── */
+
+.popup {
+  padding: 14px 14px 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* =========================================
-   Header & Quick Links
-   ========================================= */
+/* ── Header ── */
 
 .header {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
-  gap: 4px;
+  gap: 10px;
 }
 
-.logo-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.logo-icon {
-  font-size: 24px;
-  line-height: 1;
-  filter: drop-shadow(0 2px 6px rgba(255, 59, 48, 0.4));
-}
-
-.title-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.logo {
+  flex-shrink: 0;
+  border-radius: 10px;
 }
 
 h1 {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: -0.3px;
-  color: #ffffff;
-}
-
-.version-badge {
-  font-size: 10px;
-  font-weight: 600;
-  background: var(--bg-tertiary);
-  color: var(--text-muted);
-  padding: 2px 6px;
-  border-radius: 10px;
-  border: 1px solid var(--border-subtle);
+  color: var(--rosewater);
+  line-height: 1.2;
 }
 
 .subtitle {
   font-size: 11px;
-  color: var(--text-secondary);
+  color: var(--overlay1);
+  margin-top: 1px;
 }
 
-.quick-links {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.quick-links a {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 20px;
-  transition: all 0.15s ease;
-}
-
-.quick-links a:hover {
-  background: var(--bg-hover);
-  color: #ffffff;
-  border-color: var(--border-strong);
-}
-
-.quick-links a.highlight {
-  background: rgba(255, 59, 48, 0.12);
-  color: #ff6b64;
-  border-color: rgba(255, 59, 48, 0.3);
-}
-
-.quick-links a.highlight:hover {
-  background: var(--accent-red);
-  color: #ffffff;
-  border-color: var(--accent-red);
-}
+/* ── Divider ── */
 
 .divider {
   height: 1px;
-  background: var(--border-subtle);
-  margin: 2px 0;
+  background: var(--surface0);
+  flex-shrink: 0;
 }
 
-/* =========================================
-   Sections & Controls
-   ========================================= */
+/* ── Sections ── */
 
 .content {
   display: flex;
@@ -156,198 +101,159 @@ h1 {
   gap: 10px;
 }
 
-.section-title {
+.section-label {
   font-size: 10px;
   font-weight: 700;
+  letter-spacing: 1.4px;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--text-muted);
+  color: var(--mauve);
+  margin-top: 2px;
 }
 
-.control-group {
+/* ── Row (label + control) ── */
+
+.row {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 22px;
 }
 
-.control-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-primary);
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
 }
 
-/* =========================================
-   Custom Dropdown Select
-   ========================================= */
+.hint {
+  font-size: 11px;
+  color: var(--overlay0);
+  margin-top: 1px;
+}
 
-.select-wrapper {
+/* ── Select ── */
+
+.select-wrap {
   position: relative;
-  width: 100%;
+  flex-shrink: 0;
 }
 
 select {
-  width: 100%;
   appearance: none;
   -webkit-appearance: none;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 8px 30px 8px 10px;
+  -moz-appearance: none;
+  background: var(--surface0);
+  color: var(--text);
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 6px 28px 6px 10px;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   outline: none;
-  transition: all 0.15s ease;
-}
-
-select:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--border-strong);
+  background-image: none;
 }
 
 select:focus {
-  border-color: var(--accent-red);
-  box-shadow: 0 0 0 2px var(--accent-red-glow);
+  outline: 2px solid var(--mauve);
+  outline-offset: 1px;
 }
 
-.select-arrow {
+.chevron {
   position: absolute;
-  right: 10px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
-  color: var(--text-secondary);
-  font-size: 12px;
+  color: var(--overlay1);
 }
 
-/* =========================================
-   Toggle Switch Row
-   ========================================= */
+/* ── Toggle ── */
 
-.switch-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 2px 0;
-}
-
-.switch-info {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.switch-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.switch-sub {
-  font-size: 10px;
-  color: var(--text-muted);
-}
-
-.switch {
+.toggle {
   position: relative;
-  display: inline-block;
-  width: 36px;
-  height: 20px;
+  width: 32px;
+  height: 18px;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
-.switch input {
+.toggle input {
   opacity: 0;
   width: 0;
   height: 0;
+  position: absolute;
 }
 
-.slider {
+.track {
   position: absolute;
-  cursor: pointer;
   inset: 0;
-  background-color: var(--bg-tertiary);
-  border: 1px solid var(--border-subtle);
-  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 20px;
+  background: var(--surface0);
+  border-radius: 18px;
+  transition: background 0.2s;
 }
 
-.slider:before {
+.thumb {
   position: absolute;
-  content: "";
-  height: 14px;
-  width: 14px;
-  left: 2px;
-  bottom: 2px;
-  background-color: #ffffff;
-  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  background: var(--overlay1);
+  transition: transform 0.2s, background 0.2s;
 }
 
-input:checked + .slider {
-  background-color: var(--accent-red);
-  border-color: var(--accent-red);
+.toggle input:checked ~ .track { background: var(--green); }
+.toggle input:checked ~ .track .thumb {
+  transform: translateX(14px);
+  background: var(--crust);
+}
+.toggle input:focus-visible ~ .track {
+  outline: 2px solid var(--mauve);
+  outline-offset: 2px;
 }
 
-input:focus + .slider {
-  box-shadow: 0 0 0 2px var(--accent-red-glow);
-}
+/* ── Nested panel ── */
 
-input:checked + .slider:before {
-  transform: translateX(16px);
-}
-
-/* =========================================
-   Nested Filter Panel & Slider
-   ========================================= */
-
-.nested-panel {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.slider-control {
+.nested {
+  background: var(--mantle);
+  border: 1px solid var(--surface0);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  animation: slideIn 0.2s ease;
 }
 
-.slider-header {
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.threshold-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.threshold-pill {
+.pill {
   font-size: 11px;
   font-weight: 700;
-  background: rgba(255, 59, 48, 0.15);
-  color: #ff6b64;
-  border: 1px solid rgba(255, 59, 48, 0.3);
-  padding: 1px 8px;
-  border-radius: 12px;
+  color: var(--mauve);
+  background: var(--surface0);
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 6px;
-  background: var(--bg-tertiary);
+  height: 5px;
+  background: var(--surface0);
   border-radius: 3px;
   outline: none;
   cursor: pointer;
@@ -355,113 +261,74 @@ input[type="range"] {
 
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
-  background: var(--accent-red);
+  background: var(--mauve);
+  border: 2px solid var(--rosewater);
   cursor: pointer;
-  border: 2px solid #ffffff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-  transition: transform 0.1s ease;
+  transition: transform 0.15s;
 }
 
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
-}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); }
 
 input[type="range"]::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
-  background: var(--accent-red);
+  background: var(--mauve);
+  border: 2px solid var(--rosewater);
   cursor: pointer;
-  border: 2px solid #ffffff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
-.slider-ticks {
+.ticks {
   display: flex;
   justify-content: space-between;
-  font-size: 9px;
-  color: var(--text-muted);
-  padding: 0 2px;
-}
-
-/* =========================================
-   Segmented Radio Control (Hide Style)
-   ========================================= */
-
-.segmented-control {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  background: var(--bg-tertiary);
-  padding: 3px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
-}
-
-.segment {
-  cursor: pointer;
-}
-
-.segment input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.segment-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 2px;
-  padding: 6px 4px;
   font-size: 10px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  border-radius: 4px;
-  transition: all 0.15s ease;
+  color: var(--overlay0);
 }
 
-.segment-icon {
-  font-size: 13px;
-}
-
-.segment input:checked + .segment-btn {
-  background: var(--bg-primary);
-  color: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--border-strong);
-}
-
-/* =========================================
-   Footer & Utilities
-   ========================================= */
+/* ── Footer ── */
 
 .footer {
+  display: flex;
+  justify-content: center;
+}
+
+.links {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.links a {
+  flex: 1;
   text-align: center;
-  padding-top: 4px;
-}
-
-.author-tag {
-  font-size: 10px;
-  color: var(--text-muted);
-}
-
-.author-tag a {
-  color: var(--text-secondary);
-  text-decoration: none;
+  font-size: 12px;
   font-weight: 600;
+  color: var(--subtext0);
+  text-decoration: none;
+  padding: 7px 10px;
+  border-radius: var(--r-sm);
+  background: var(--surface0);
+  transition: color 0.15s, background 0.15s;
 }
 
-.author-tag a:hover {
-  color: #ffffff;
+.links a:hover {
+  background: var(--surface1);
+  color: var(--text);
 }
 
-.hidden {
-  display: none !important;
+.links a.donate {
+  background: var(--pink);
+  color: var(--crust);
 }
+
+.links a.donate:hover {
+  background: var(--rosewater);
+  color: var(--crust);
+}
+
+/* ── Utility ── */
+
+.hidden { display: none !important; }
