@@ -2,10 +2,21 @@
 
 # RatioYT
 
-> JavaScript-based extension with a sidebar panel. Adds a sidebar with a simple page.
+> Cross-browser extension that shows like/dislike ratio scores on YouTube video cards — on the home feed, search, shorts, playlists and more.
 
+Scores come from the [Return YouTube Dislike](https://returnyoutubedislike.com) API and are cached locally in IndexedDB, so browsing stays fast and the API isn't hammered.
 
 ![screenshot](./public/screenshot.png)
+
+## Features
+
+- Score badges on video cards: percentage, 10-point ratio, smiley faces, or 5-star SVGs with half stars
+- Optional dynamic score colouring (red → green)
+- Quiet mode: filter the feed without showing badges
+- Hide low-rated videos (home & search) behind a soft blur — hovering reveals them
+- Adjustable minimum-score threshold
+- Remote-updateable selector config, so YouTube UI changes don't need an extension update
+
 ## Commands
 
 ### dev
@@ -40,6 +51,10 @@ npm run preview
 
 [Extension.js docs](https://extension.js.org).
 
+
+
+
+##### DEVLOGS
 
 
 Devlog #1: Initial Design and goals
@@ -165,18 +180,9 @@ At first I just thought of self-hosting a backend myself, cuase it had a feature
 Create a lobby server, where users can post and get others ids without having to explicitally trying to hardcode an id. what it will do is just collect users who ping the server with their ids and then display those ids
 
 no need for elaborate setup process for my future projects too, and I plan to turn it into a fulll fledged website, package and server
+## Popup settings
 
----
-
-
-## Options page Features
-
-Scoring System
-Scoring Colour
-Cache Sharing
-Hide Videos With Low Score
-Low Score Threshold
-
+Score format · Score colour · Quiet mode · Hide low-rated videos · Minimum score
 
 ---
 
