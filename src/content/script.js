@@ -8,8 +8,10 @@ let userSettings = {
   hideOnlyMode: false,
   hideLowScore: false,
   lowScoreThreshold: 25,
-  hideStyle: "collapse",
 };
+
+// Hidden videos are always blurred; hovering peeks at them briefly.
+const PEEK_MS = 1000;
 
 let elementQueue = [];
 let queueIntervalId = null;
@@ -36,57 +38,35 @@ function injectCustomStyles() {
       position: relative !important;
     }
     .ratioyt-blur-target {
-      filter: blur(24px) brightness(0.2) !important;
-      -webkit-filter: blur(24px) brightness(0.2) !important;
+      position: relative !important;
+      filter: blur(20px) brightness(0.45) !important;
+      -webkit-filter: blur(20px) brightness(0.45) !important;
       pointer-events: none !important;
       user-select: none !important;
-      transition: filter 0.25s ease !important;
+      transition: filter 0.35s ease !important;
     }
-    .ratioyt-blur-overlay {
-      position: absolute !important;
-      inset: 0 !important;
-      z-index: 100 !important;
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      justify-content: center !important;
-      gap: 6px !important;
-      background: rgba(0, 0, 0, 0.5) !important;
-      backdrop-filter: blur(8px) !important;
-      -webkit-backdrop-filter: blur(8px) !important;
-      border-radius: 12px !important;
-      cursor: pointer !important;
-      user-select: none !important;
-      transition: all 0.2s ease !important;
-    }
-    .ratioyt-blur-overlay:hover {
-      background: rgba(0, 0, 0, 0.3) !important;
-    }
-    .ratioyt-blur-pill {
-      background: rgba(255, 59, 48, 0.95) !important;
-      color: #ffffff !important;
-      font-size: 11px !important;
-      font-weight: 700 !important;
-      padding: 3px 10px !important;
-      border-radius: 20px !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    }
-    .ratioyt-blur-sub {
-      font-size: 10px !important;
-      color: #e0e0e0 !important;
-      font-weight: 500 !important;
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8) !important;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-    }
-    .ratioyt-unblurred .ratioyt-blur-target {
+    /* hovering a hidden card reveals it, and it stays visible while hovered */
+    .ratioyt-peek .ratioyt-blur-target {
       filter: none !important;
       -webkit-filter: none !important;
       pointer-events: auto !important;
     }
-    .ratioyt-unblurred .ratioyt-blur-overlay {
+    .ratioyt-peek-hint {
+      position: absolute !important;
+      left: 50% !important;
+      bottom: 10px !important;
+      transform: translateX(-50%) !important;
+      z-index: 100 !important;
+      color: rgba(255, 255, 255, 0.5) !important;
       opacity: 0 !important;
       pointer-events: none !important;
+      transition: opacity 0.3s ease !important;
+    }
+    .ratioyt-peek .ratioyt-peek-hint {
+      opacity: 1 !important;
+    }
+    .ratioyt-hint-gone .ratioyt-peek-hint {
+      opacity: 0 !important;
     }
     .ratioyt-hide-badges .ratioyt-badge:not(.ratioyt-force-show),
     .ratioyt-hide-badges .ratioyt-delimiter:not(.ratioyt-force-show) {
@@ -175,7 +155,6 @@ function initUserSettings() {
       hideOnlyMode: false,
       hideLowScore: false,
       lowScoreThreshold: 25,
-      hideStyle: "collapse",
     },
     (config) => {
       userSettings = { ...userSettings, ...config };
@@ -508,59 +487,54 @@ function applyHideEffect(hostCard, scoreValue) {
       hostCard.style.display = "";
       delete hostCard.dataset.ratioytHidden;
     }
-    hostCard.classList.remove("ratioyt-blur-host", "ratioyt-unblurred");
+    hostCard.classList.remove("ratioyt-blur-host", "ratioyt-peek", "ratioyt-hint-gone");
     const targetContent = hostCard.querySelector(".ratioyt-blur-target");
     if (targetContent) targetContent.classList.remove("ratioyt-blur-target");
-    const overlay = hostCard.querySelector(".ratioyt-blur-overlay");
-    if (overlay) overlay.remove();
+    const hint = hostCard.querySelector(".ratioyt-peek-hint");
+    if (hint) hint.remove();
     return;
   }
 
-  // Handle Hiding Style
-  if (userSettings.hideStyle === "blur") {
-    // 1. Remove collapse display
-    if (hostCard.dataset.ratioytHidden === "true") {
-      hostCard.style.display = "";
-      delete hostCard.dataset.ratioytHidden;
-    }
+  // Hidden videos are only blurred — nothing is placed on top of them.
+  if (hostCard.dataset.ratioytHidden === "true") {
+    hostCard.style.display = "";
+    delete hostCard.dataset.ratioytHidden;
+  }
+  hostCard.classList.add("ratioyt-blur-host");
 
-    // 2. Apply extreme blur & dim effect
-    hostCard.classList.add("ratioyt-blur-host");
-    const mainContent =
-      hostCard.querySelector(
-        "#content, .ytLockupViewModelHost, .shortsLockupViewModelHost, #dismissible",
-      ) || hostCard;
-    mainContent.classList.add("ratioyt-blur-target");
+  const mainContent =
+    hostCard.querySelector(
+      "#content, .ytLockupViewModelHost, .shortsLockupViewModelHost, #dismissible",
+    ) || hostCard;
+  mainContent.classList.add("ratioyt-blur-target");
 
-    // 3. Create or update blur overlay div
-    let overlay = hostCard.querySelector(".ratioyt-blur-overlay");
-    if (!overlay) {
-      overlay = document.createElement("div");
-      overlay.className = "ratioyt-blur-overlay";
-      overlay.innerHTML = `
-        <span class="ratioyt-blur-pill">🛡️ Hidden (${scoreValue}%)</span>
-        <span class="ratioyt-blur-sub">Click to preview</span>
-      `;
-      overlay.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        hostCard.classList.toggle("ratioyt-unblurred");
-      });
-      hostCard.appendChild(overlay);
-    } else {
-      const pill = overlay.querySelector(".ratioyt-blur-pill");
-      if (pill) pill.textContent = `🛡️ Hidden (${scoreValue}%)`;
-    }
-  } else {
-    // Style === 'collapse' (remove video & gap all together)
-    hostCard.classList.remove("ratioyt-blur-host", "ratioyt-unblurred");
-    const targetContent = hostCard.querySelector(".ratioyt-blur-target");
-    if (targetContent) targetContent.classList.remove("ratioyt-blur-target");
-    const overlay = hostCard.querySelector(".ratioyt-blur-overlay");
-    if (overlay) overlay.remove();
+  // A tiny, quiet hint that only breathes in during the hover peek.
+  if (!mainContent.querySelector(".ratioyt-peek-hint")) {
+    const hint = document.createElement("div");
+    hint.className = "ratioyt-peek-hint";
+    hint.innerHTML =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+      'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M1.8 12S5.6 5.8 12 5.8 22.2 12 22.2 12 18.4 18.2 12 18.2 1.8 12 1.8 12Z"/>' +
+      '<circle cx="12" cy="12" r="3"/></svg>';
+    mainContent.appendChild(hint);
+  }
 
-    hostCard.style.display = "none";
-    hostCard.dataset.ratioytHidden = "true";
+  // Hover reveals the video; the eye hint only lingers for a second.
+  if (hostCard.dataset.ratioytPeekBound !== "true") {
+    hostCard.dataset.ratioytPeekBound = "true";
+    let hintTimer = null;
+    hostCard.addEventListener("mouseenter", () => {
+      if (!hostCard.classList.contains("ratioyt-blur-host")) return;
+      hostCard.classList.add("ratioyt-peek");
+      hostCard.classList.remove("ratioyt-hint-gone");
+      clearTimeout(hintTimer);
+      hintTimer = setTimeout(() => hostCard.classList.add("ratioyt-hint-gone"), PEEK_MS);
+    });
+    hostCard.addEventListener("mouseleave", () => {
+      clearTimeout(hintTimer);
+      hostCard.classList.remove("ratioyt-peek", "ratioyt-hint-gone");
+    });
   }
 }
 
