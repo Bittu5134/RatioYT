@@ -100,8 +100,8 @@ function injectCustomStyles() {
     .ratioyt-hint-gone .ratioyt-peek-hint {
       opacity: 0 !important;
     }
-    .ratioyt-hide-badges .ratioyt-badge:not(.ratioyt-force-show),
-    .ratioyt-hide-badges .ratioyt-delimiter:not(.ratioyt-force-show) {
+    .ratioyt-hide-badges .ratioyt-badge,
+    .ratioyt-hide-badges .ratioyt-row {
       display: none !important;
     }
     .ratioyt-stars-wrap {
@@ -378,23 +378,17 @@ function getTargetRow(el, category) {
 // =========================================
 
 function injectPlaceholder(targetRow, category) {
-  const isSearch = category === "search";
-
-  if (isSearch && activeSelectors.targetRows.searchSeparator) {
-    const sep = queryFirst(targetRow, activeSelectors.targetRows.searchSeparator);
-    if (sep) sep.removeAttribute("hidden");
-  } else if (!targetRow.querySelector(".ratioyt-delimiter")) {
-    const delim = document.createElement("span");
-    const classes = activeSelectors.classes?.delimiter?.[category] || [
-      "ytContentMetadataViewModelDelimiter",
-    ];
-    delim.className = `${classes.join(" ")} ratioyt-delimiter`;
-    delim.textContent = activeSelectors.css?.delimiterText || " • ";
-    if (activeSelectors.css?.delimiterStyle) delim.style.cssText = activeSelectors.css.delimiterStyle;
-    targetRow.appendChild(delim);
+  // The badge gets its own line under the metadata. Appending it into the
+  // row itself would make that row overflow, and YouTube truncates those
+  // rows with an ellipsis - cutting off its text and the badge.
+  let badgeRow = targetRow.parentElement.querySelector(".ratioyt-row");
+  if (!badgeRow) {
+    badgeRow = document.createElement(targetRow.tagName);
+    badgeRow.className = `${targetRow.className} ratioyt-row`;
+    targetRow.after(badgeRow);
   }
 
-  let badge = targetRow.querySelector(".ratioyt-badge");
+  let badge = badgeRow.querySelector(".ratioyt-badge");
   if (!badge) {
     badge = document.createElement("span");
     const classes = activeSelectors.classes?.score?.[category] || [
@@ -403,7 +397,7 @@ function injectPlaceholder(targetRow, category) {
     ];
     badge.className = `${classes.join(" ")} ratioyt-badge`;
     if (activeSelectors.css?.scoreStyle) badge.style.cssText = activeSelectors.css.scoreStyle;
-    targetRow.appendChild(badge);
+    badgeRow.appendChild(badge);
   }
 
   badge.style.color = activeSelectors.css?.placeholderColor || "#888888";
@@ -595,7 +589,7 @@ function scanAndProcessCards() {
     const targetRow = getTargetRow(el, category);
     if (!targetRow) return;
 
-    const existingBadge = targetRow.querySelector(".ratioyt-badge");
+    const existingBadge = el.querySelector(".ratioyt-badge");
     if (el.dataset.ratioytVideoId === videoId && existingBadge) {
       // Scored, in flight, or recently failed - nothing to do yet.
       if (existingBadge.dataset.ratioytValue) return;
