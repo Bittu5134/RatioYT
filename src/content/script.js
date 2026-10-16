@@ -18,6 +18,17 @@ const PEEK_MS = 1000;
 // doesn't leave a "--%" placeholder stuck until the next navigation.
 const RETRY_AFTER_MS = 5 * 60 * 1000;
 
+// How long cached scores stay fresh.
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+// After this many consecutive API failures, lookups pause for a while.
+const API_FAIL_STREAK = 5;
+const API_PAUSE_MS = 30 * 1000;
+
+// Smiley thresholds: happy above SMILEY_GOOD, neutral above SMILEY_MEH.
+const SMILEY_GOOD = 70;
+const SMILEY_MEH = 40;
+
 const SELECTOR_REFRESH_MS = 6 * 60 * 60 * 1000;
 
 // The card types a video badge can live in, used to find the card that
@@ -36,6 +47,8 @@ let elementQueue = [];
 let queueIntervalId = null;
 let pendingVideos = new Set();
 let failedVideos = new Map();
+let failStreak = 0;
+let pauseUntil = 0;
 let scanTimeout = null;
 let scoreDB = {};
 
@@ -240,11 +253,20 @@ function initializeDatabase() {
 
     getAllRequest.onsuccess = () => {
       const now = Date.now();
+      const expired = [];
       for (const entry of getAllRequest.result || []) {
         if (entry.expiresAt > now) {
           scoreDB[entry.videoId] = { score: entry.score, expiresAt: entry.expiresAt };
         } else {
-          deleteCacheRecord(entry.videoId);
+          expired.push(entry.videoId);
+        }
+      }
+      // Purge expired entries in a single transaction.
+      if (expired.length > 0 && dbInstance) {
+        const store = dbInstance.transaction(DB_STORE, "readwrite").objectStore(DB_STORE);
+        for (const videoId of expired) {
+          delete scoreDB[videoId];
+          store.delete(videoId);
         }
       }
       startObserver();
@@ -414,7 +436,7 @@ function formatScoreText(scoreValue, format) {
     case "decimal":
       return `${Math.round(scoreValue / 10)}/10`;
     case "smiley":
-      return scoreValue >= 70 ? "😊" : scoreValue >= 40 ? "😐" : "😞";
+      return scoreValue >= SMILEY_GOOD ? "😊" : scoreValue >= SMILEY_MEH ? "😐" : "😞";
     case "percentage":
     default:
       return `${scoreValue}%`;
@@ -505,6 +527,8 @@ function applyHideEffect(hostCard, scoreValue) {
 // =========================================
 
 async function processQueue() {
+  if (Date.now() < pauseUntil) return;
+
   while (elementQueue.length > 0) {
     const task = elementQueue.shift();
     pendingVideos.delete(task.videoId);
@@ -526,22 +550,32 @@ async function fetchScore({ videoId, placeholderElement, cardElement }) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const votes = await response.json();
 
+    let score;
     if (votes.deleted || (votes.likes === undefined && votes.dislikes === undefined)) {
-      // Cache deleted/unknown videos so they aren't refetched on every navigation.
-      saveToIndexDB(videoId, -1, Date.now() + 7 * 24 * 60 * 60 * 1000);
-      applyFinalScore(placeholderElement, -1, cardElement);
-      return;
+      score = -1; // deleted/unknown: cached so it isn't refetched every navigation
+    } else {
+      const total = (votes.likes ?? 0) + (votes.dislikes ?? 0);
+      score = total > 0 ? Math.round((votes.likes / total) * 100) : 0;
     }
 
-    const total = (votes.likes ?? 0) + (votes.dislikes ?? 0);
-    const score = total > 0 ? Math.round((votes.likes / total) * 100) : 0;
-
-    saveToIndexDB(videoId, score, Date.now() + 7 * 24 * 60 * 60 * 1000);
+    saveToIndexDB(videoId, score, Date.now() + CACHE_TTL_MS);
     applyFinalScore(placeholderElement, score, cardElement);
+
+    failStreak = 0;
+    failedVideos.delete(videoId);
   } catch (err) {
     console.warn("[RatioYT] Failed score for", videoId, err.message);
     failedVideos.set(videoId, Date.now());
     placeholderElement.textContent = "--%";
+
+    failStreak += 1;
+    if (failStreak >= API_FAIL_STREAK) {
+      failStreak = 0;
+      pauseUntil = Date.now() + API_PAUSE_MS;
+      console.warn(
+        `[RatioYT] Pausing lookups for ${API_PAUSE_MS / 1000}s after ${API_FAIL_STREAK} consecutive failures`,
+      );
+    }
   }
 }
 
