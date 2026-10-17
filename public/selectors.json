@@ -79,6 +79,22 @@
     ]
   },
   "classes": {
+    "delimiter": {
+      "lockup": [
+        "ytContentMetadataViewModelDelimiter"
+      ],
+      "playlist": [
+        "style-scope",
+        "yt-formatted-string"
+      ],
+      "search": [
+        "style-scope",
+        "ytd-video-meta-block"
+      ],
+      "shorts": [
+        "ytContentMetadataViewModelDelimiter"
+      ]
+    },
     "score": {
       "lockup": [
         "ytAttributedStringHost",
@@ -101,6 +117,7 @@
     }
   },
   "css": {
+    "delimiterText": " • ",
     "placeholderText": "--%",
     "placeholderColor": "#888888",
     "scoreStyle": ""

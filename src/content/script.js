@@ -34,7 +34,7 @@ const SELECTOR_REFRESH_MS = 6 * 60 * 60 * 1000;
 // The card types a video badge can live in, used to find the card that
 // gets blurred when a video is hidden.
 const HOST_CARD_SELECTOR =
-  "ytd-rich-item-renderer, ytd-video-renderer, yt-lockup-view-model, ytm-shorts-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, ytd-compact-video-renderer";
+  "ytd-rich-item-renderer, ytd-video-renderer, yt-lockup-view-model, yt-shorts-lockup-view-model, ytm-shorts-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, ytd-compact-video-renderer";
 
 const TARGET_ROW_KEYS = {
   shorts: ["shortsMetadata"],
@@ -73,15 +73,17 @@ function injectCustomStyles() {
       position: relative !important;
       filter: blur(20px) brightness(0.45) !important;
       -webkit-filter: blur(20px) brightness(0.45) !important;
-      pointer-events: none !important;
       user-select: none !important;
       transition: filter 0.35s ease !important;
     }
-    /* hovering a hidden card reveals it, and it stays visible while hovered */
-    .ratioyt-peek .ratioyt-blur-target {
+    /* hover reveals a hidden card, a click keeps it revealed.
+       The card itself can be the blur target (shorts), so match both. */
+    .ratioyt-peek.ratioyt-blur-target,
+    .ratioyt-peek .ratioyt-blur-target,
+    .ratioyt-pinned.ratioyt-blur-target,
+    .ratioyt-pinned .ratioyt-blur-target {
       filter: none !important;
       -webkit-filter: none !important;
-      pointer-events: auto !important;
     }
     .ratioyt-peek-hint {
       position: absolute !important;
@@ -101,7 +103,8 @@ function injectCustomStyles() {
       opacity: 0 !important;
     }
     .ratioyt-hide-badges .ratioyt-badge,
-    .ratioyt-hide-badges .ratioyt-row {
+    .ratioyt-hide-badges .ratioyt-row,
+    .ratioyt-hide-badges .ratioyt-delimiter {
       display: none !important;
     }
     .ratioyt-stars-wrap {
@@ -377,31 +380,61 @@ function getTargetRow(el, category) {
 // 4. UI INJECTION & STYLING
 // =========================================
 
-function injectPlaceholder(targetRow, category) {
-  // The badge gets its own line under the metadata. Appending it into the
-  // row itself would make that row overflow, and YouTube truncates those
-  // rows with an ellipsis - cutting off its text and the badge.
-  let badgeRow = targetRow.parentElement.querySelector(".ratioyt-row");
-  if (!badgeRow) {
-    badgeRow = document.createElement(targetRow.tagName);
-    badgeRow.className = `${targetRow.className} ratioyt-row`;
-    targetRow.after(badgeRow);
-  }
+function createDelimiter(category) {
+  const delim = document.createElement("span");
+  const classes = activeSelectors.classes?.delimiter?.[category] || [
+    "ytContentMetadataViewModelDelimiter",
+  ];
+  delim.className = `${classes.join(" ")} ratioyt-delimiter`;
+  delim.textContent = activeSelectors.css?.delimiterText || " • ";
+  return delim;
+}
 
-  let badge = badgeRow.querySelector(".ratioyt-badge");
+function createBadge(category) {
+  const badge = document.createElement("span");
+  const classes = activeSelectors.classes?.score?.[category] || [
+    "ytAttributedStringHost",
+    "ytContentMetadataViewModelMetadataText",
+  ];
+  badge.className = `${classes.join(" ")} ratioyt-badge`;
+  if (activeSelectors.css?.scoreStyle) badge.style.cssText = activeSelectors.css.scoreStyle;
+  return badge;
+}
+
+// YouTube's metadata rows are nowrap + ellipsis, so an inline badge that
+// doesn't fit would truncate the row's own text. When it overflows, drop
+// the badge onto its own line under the row instead.
+function ensureBadgeFits(badge) {
+  const row = badge.parentElement;
+  if (!row || row.classList.contains("ratioyt-row")) return; // already on its own line
+
+  const rowRect = row.getBoundingClientRect();
+  if (badge.getBoundingClientRect().right <= rowRect.right + 1) return; // fits inline
+
+  row.querySelector(".ratioyt-delimiter")?.remove();
+  const ownRow = document.createElement(row.tagName);
+  ownRow.className = `${row.className} ratioyt-row`;
+  row.after(ownRow);
+  ownRow.appendChild(badge);
+}
+
+function injectPlaceholder(targetRow, category) {
+  // An existing badge sits either inline in the row or on its own line below.
+  let badge =
+    targetRow.querySelector(".ratioyt-badge") ||
+    targetRow.parentElement.querySelector(".ratioyt-row .ratioyt-badge");
+
   if (!badge) {
-    badge = document.createElement("span");
-    const classes = activeSelectors.classes?.score?.[category] || [
-      "ytAttributedStringHost",
-      "ytContentMetadataViewModelMetadataText",
-    ];
-    badge.className = `${classes.join(" ")} ratioyt-badge`;
-    if (activeSelectors.css?.scoreStyle) badge.style.cssText = activeSelectors.css.scoreStyle;
-    badgeRow.appendChild(badge);
+    badge = createBadge(category);
+    if (!targetRow.querySelector(".ratioyt-delimiter")) {
+      targetRow.appendChild(createDelimiter(category));
+    }
+    targetRow.appendChild(badge);
   }
 
   badge.style.color = activeSelectors.css?.placeholderColor || "#888888";
   badge.textContent = activeSelectors.css?.placeholderText || "--%";
+  ensureBadgeFits(badge);
   return badge;
 }
 
@@ -456,11 +489,12 @@ function applyFinalScore(badge, scoreValue, cardElement) {
   }
 
   badge.style.color = userSettings.scoringColour ? `hsl(${scoreValue * 1.2}, 100%, 45%)` : "";
+  ensureBadgeFits(badge); // the real content can be wider than the placeholder
   if (hostCard) applyHideEffect(hostCard, scoreValue);
 }
 
 function clearHideEffect(hostCard) {
-  hostCard.classList.remove("ratioyt-blur-host", "ratioyt-peek", "ratioyt-hint-gone");
+  hostCard.classList.remove("ratioyt-blur-host", "ratioyt-peek", "ratioyt-pinned", "ratioyt-hint-gone");
   // The blur target can be the card itself, which querySelector can't see.
   hostCard.classList.remove("ratioyt-blur-target");
   hostCard.querySelector(".ratioyt-blur-target")?.classList.remove("ratioyt-blur-target");
@@ -498,7 +532,8 @@ function applyHideEffect(hostCard, scoreValue) {
     mainContent.appendChild(hint);
   }
 
-  // Hover reveals the video; the eye hint only lingers for a second.
+  // Hover reveals the video; a click keeps it revealed (swallowed, so it
+  // doesn't also open the video). After that, clicks pass through normally.
   if (hostCard.dataset.ratioytPeekBound !== "true") {
     hostCard.dataset.ratioytPeekBound = "true";
     let hintTimer = null;
@@ -513,6 +548,17 @@ function applyHideEffect(hostCard, scoreValue) {
       clearTimeout(hintTimer);
       hostCard.classList.remove("ratioyt-peek", "ratioyt-hint-gone");
     });
+    hostCard.addEventListener(
+      "click",
+      (e) => {
+        if (!hostCard.classList.contains("ratioyt-blur-host")) return;
+        if (hostCard.classList.contains("ratioyt-pinned")) return;
+        e.preventDefault();
+        e.stopPropagation();
+        hostCard.classList.add("ratioyt-pinned");
+      },
+      true, // capture, so the click doesn't reach the video or YouTube's handlers
+    );
   }
 }
 
