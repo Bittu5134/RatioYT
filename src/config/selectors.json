@@ -3,7 +3,9 @@
   "containers": {
     "observe": [
       "yt-content-metadata-view-model",
+      "yt-shorts-lockup-view-model",
       "ytm-shorts-lockup-view-model",
+      "ytd-reel-item-renderer",
       "ytd-video-renderer",
       "ytd-playlist-video-renderer",
       "ytd-playlist-panel-video-renderer",
@@ -11,6 +13,7 @@
       "ytd-grid-video-renderer"
     ],
     "shorts": [
+      "yt-shorts-lockup-view-model",
       "ytm-shorts-lockup-view-model",
       "ytd-reel-item-renderer"
     ],
@@ -38,6 +41,7 @@
     ],
     "shorts": [
       "a[href*='/shorts/']",
+      ".ytShortsLockupViewModelHostEndpoint",
       ".shortsLockupViewModelHostEndpoint",
       "a.reel-item-endpoint"
     ],
@@ -66,7 +70,12 @@
     "shortsMetadata": [
       ".shortsLockupViewModelHostOutsideMetadataSubhead",
       ".shortsLockupViewModelHostMetadataSubhead",
-      ".shortsLockupViewModelHostOutsideMetadata"
+      ".shortsLockupViewModelHostOutsideMetadata",
+      ".ytShortsLockupViewModelHostOutsideMetadataSubhead",
+      ".ytShortsLockupViewModelHostMetadataSubhead",
+      ".ytShortsLockupViewModelHostOutsideMetadata",
+      "yt-reel-metadatabar-view-model",
+      "#metadata"
     ],
     "playlistMetadata": [
       "span#byline:not([hidden])",

@@ -34,7 +34,7 @@ const SELECTOR_REFRESH_MS = 6 * 60 * 60 * 1000;
 // The card types a video badge can live in, used to find the card that
 // gets blurred when a video is hidden.
 const HOST_CARD_SELECTOR =
-  "ytd-rich-item-renderer, ytd-video-renderer, yt-lockup-view-model, yt-shorts-lockup-view-model, ytm-shorts-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, ytd-compact-video-renderer";
+  "yt-shorts-lockup-view-model, ytm-shorts-lockup-view-model, ytd-reel-item-renderer, yt-lockup-view-model, ytd-video-renderer, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, ytd-compact-video-renderer, ytd-grid-video-renderer, ytd-rich-item-renderer";
 
 const TARGET_ROW_KEYS = {
   shorts: ["shortsMetadata"],
@@ -68,39 +68,48 @@ function injectCustomStyles() {
   style.textContent = `
     .ratioyt-blur-host {
       position: relative !important;
+      cursor: pointer !important;
     }
     .ratioyt-blur-target {
       position: relative !important;
       filter: blur(20px) brightness(0.45) !important;
       -webkit-filter: blur(20px) brightness(0.45) !important;
       user-select: none !important;
-      transition: filter 0.35s ease !important;
+      transition: filter 0.25s ease !important;
     }
-    /* hover reveals a hidden card, a click keeps it revealed.
-       The card itself can be the blur target (shorts), so match both. */
-    .ratioyt-peek.ratioyt-blur-target,
-    .ratioyt-peek .ratioyt-blur-target,
-    .ratioyt-pinned.ratioyt-blur-target,
-    .ratioyt-pinned .ratioyt-blur-target {
+    /* Only clicking while hovered unblurs the video.
+       The card itself can be the blur target (shorts), so match both parent and self. */
+    .ratioyt-unblurred.ratioyt-blur-target,
+    .ratioyt-unblurred .ratioyt-blur-target {
       filter: none !important;
       -webkit-filter: none !important;
+      cursor: auto !important;
     }
     .ratioyt-peek-hint {
       position: absolute !important;
       left: 50% !important;
-      bottom: 10px !important;
+      bottom: 12px !important;
       transform: translateX(-50%) !important;
       z-index: 100 !important;
-      color: rgba(255, 255, 255, 0.5) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 32px !important;
+      height: 32px !important;
+      border-radius: 50% !important;
+      background: rgba(0, 0, 0, 0.6) !important;
+      color: rgba(255, 255, 255, 0.85) !important;
       opacity: 0 !important;
       pointer-events: none !important;
-      transition: opacity 0.3s ease !important;
+      transition: opacity 0.2s ease !important;
     }
-    .ratioyt-peek .ratioyt-peek-hint {
+    /* hint appears on hover over a blurred card */
+    .ratioyt-blur-host:hover .ratioyt-peek-hint {
       opacity: 1 !important;
     }
-    .ratioyt-hint-gone .ratioyt-peek-hint {
-      opacity: 0 !important;
+    /* once unblurred, hide the hint immediately */
+    .ratioyt-unblurred .ratioyt-peek-hint {
+      display: none !important;
     }
     .ratioyt-hide-badges .ratioyt-badge,
     .ratioyt-hide-badges .ratioyt-row,
@@ -407,14 +416,24 @@ function createBadge(category) {
 function ensureBadgeFits(badge) {
   const row = badge.parentElement;
   if (!row || row.classList.contains("ratioyt-row")) return; // already on its own line
+  if (row.clientWidth === 0) return;
 
   const rowRect = row.getBoundingClientRect();
-  if (badge.getBoundingClientRect().right <= rowRect.right + 1) return; // fits inline
+  const badgeRect = badge.getBoundingClientRect();
+  const isOverflowing =
+    row.scrollWidth > row.clientWidth + 1 ||
+    (rowRect.right > 0 && badgeRect.right > rowRect.right + 1);
 
+  if (!isOverflowing) return; // fits inline nicely!
+
+  // Doesn't fit: move to its own line below the metadata row
   row.querySelector(".ratioyt-delimiter")?.remove();
-  const ownRow = document.createElement(row.tagName);
-  ownRow.className = `${row.className} ratioyt-row`;
-  row.after(ownRow);
+  let ownRow = row.parentElement?.querySelector(".ratioyt-row");
+  if (!ownRow) {
+    ownRow = document.createElement(row.tagName);
+    ownRow.className = `${row.className} ratioyt-row`;
+    row.after(ownRow);
+  }
   ownRow.appendChild(badge);
 }
 
@@ -472,7 +491,7 @@ function formatScoreText(scoreValue, format) {
 
 function applyFinalScore(badge, scoreValue, cardElement) {
   badge.dataset.ratioytValue = String(scoreValue);
-  const hostCard = (cardElement || badge).closest(HOST_CARD_SELECTOR);
+  const hostCard = (badge || cardElement).closest(HOST_CARD_SELECTOR);
 
   // Deleted/unknown videos get a neutral "N/A" and are never hidden.
   if (scoreValue < 0) {
@@ -494,7 +513,7 @@ function applyFinalScore(badge, scoreValue, cardElement) {
 }
 
 function clearHideEffect(hostCard) {
-  hostCard.classList.remove("ratioyt-blur-host", "ratioyt-peek", "ratioyt-pinned", "ratioyt-hint-gone");
+  hostCard.classList.remove("ratioyt-blur-host", "ratioyt-unblurred");
   // The blur target can be the card itself, which querySelector can't see.
   hostCard.classList.remove("ratioyt-blur-target");
   hostCard.querySelector(".ratioyt-blur-target")?.classList.remove("ratioyt-blur-target");
@@ -516,49 +535,47 @@ function applyHideEffect(hostCard, scoreValue) {
   hostCard.classList.add("ratioyt-blur-host");
   const mainContent =
     hostCard.querySelector(
-      "#content, .ytLockupViewModelHost, .shortsLockupViewModelHost, #dismissible",
+      "#content, .ytLockupViewModelHost, .shortsLockupViewModelHost, .ytShortsLockupViewModelHost, [class*='ThumbnailContainer'], [class*='thumbnail-container'], ytd-thumbnail, #dismissible",
     ) || hostCard;
   mainContent.classList.add("ratioyt-blur-target");
 
-  // A tiny, quiet hint that only breathes in while the card is revealed.
-  if (!mainContent.querySelector(".ratioyt-peek-hint")) {
+  // A tiny, quiet hint that appears while hovering a blurred card.
+  if (!mainContent.querySelector(".ratioyt-peek-hint") && !hostCard.querySelector(".ratioyt-peek-hint")) {
     const hint = document.createElement("div");
     hint.className = "ratioyt-peek-hint";
     hint.innerHTML =
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-      'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+      'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M1.8 12S5.6 5.8 12 5.8 22.2 12 22.2 12 18.4 18.2 12 18.2 1.8 12 1.8 12Z"/>' +
       '<circle cx="12" cy="12" r="3"/></svg>';
-    mainContent.appendChild(hint);
+    (mainContent !== hostCard ? mainContent : hostCard).appendChild(hint);
   }
 
-  // Hover reveals the video; a click keeps it revealed (swallowed, so it
-  // doesn't also open the video). After that, clicks pass through normally.
+  // Hovering does NOT unblur. Only clicking while hovered unblurs the video.
+  // The first click is swallowed so it doesn't open the video.
+  // Once unblurred, further clicks open the video normally.
   if (hostCard.dataset.ratioytPeekBound !== "true") {
     hostCard.dataset.ratioytPeekBound = "true";
-    let hintTimer = null;
-    hostCard.addEventListener("mouseenter", () => {
-      if (!hostCard.classList.contains("ratioyt-blur-host")) return;
-      hostCard.classList.add("ratioyt-peek");
-      hostCard.classList.remove("ratioyt-hint-gone");
-      clearTimeout(hintTimer);
-      hintTimer = setTimeout(() => hostCard.classList.add("ratioyt-hint-gone"), PEEK_MS);
-    });
-    hostCard.addEventListener("mouseleave", () => {
-      clearTimeout(hintTimer);
-      hostCard.classList.remove("ratioyt-peek", "ratioyt-hint-gone");
-    });
+
     hostCard.addEventListener(
       "click",
       (e) => {
         if (!hostCard.classList.contains("ratioyt-blur-host")) return;
-        if (hostCard.classList.contains("ratioyt-pinned")) return;
+        // If already unblurred, let the click pass through to open the video
+        if (hostCard.classList.contains("ratioyt-unblurred")) return;
+
         e.preventDefault();
         e.stopPropagation();
-        hostCard.classList.add("ratioyt-pinned");
+        e.stopImmediatePropagation();
+        hostCard.classList.add("ratioyt-unblurred");
       },
-      true, // capture, so the click doesn't reach the video or YouTube's handlers
+      true, // capture, so YouTube's links/handlers don't navigate
     );
+
+    hostCard.addEventListener("mouseleave", () => {
+      // Re-blur when the mouse leaves the card
+      hostCard.classList.remove("ratioyt-unblurred");
+    });
   }
 }
 
