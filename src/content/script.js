@@ -66,36 +66,35 @@ function injectCustomStyles() {
   const style = document.createElement("style");
   style.id = "ratioyt-styles";
   style.textContent = `
-    .ratioyt-blur-host {
+    .ratioyt-cover-container {
       position: relative !important;
-      cursor: pointer !important;
     }
-    .ratioyt-blur-target {
-      position: relative !important;
-      filter: blur(20px) brightness(0.45) !important;
-      -webkit-filter: blur(20px) brightness(0.45) !important;
-      user-select: none !important;
-      transition: filter 0.25s ease !important;
-    }
-    /* Only clicking while hovered unblurs the video.
-       The card itself can be the blur target (shorts), so match both parent and self. */
-    .ratioyt-unblurred.ratioyt-blur-target,
-    .ratioyt-unblurred .ratioyt-blur-target {
-      filter: none !important;
-      -webkit-filter: none !important;
-      cursor: auto !important;
-    }
-    .ratioyt-peek-hint {
+    .ratioyt-cover {
       position: absolute !important;
-      left: 50% !important;
-      bottom: 12px !important;
-      transform: translateX(-50%) !important;
+      inset: 0 !important;
       z-index: 100 !important;
+      border-radius: 12px !important;
+      background: rgba(15, 15, 15, 0.45) !important;
+      backdrop-filter: blur(20px) brightness(0.45) !important;
+      -webkit-backdrop-filter: blur(20px) brightness(0.45) !important;
+      cursor: pointer !important;
+      user-select: none !important;
+      pointer-events: auto !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      width: 32px !important;
-      height: 32px !important;
+      transition: opacity 0.25s ease !important;
+    }
+    .ratioyt-cover.ratioyt-unblurred {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+    .ratioyt-cover-hint {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 34px !important;
+      height: 34px !important;
       border-radius: 50% !important;
       background: rgba(0, 0, 0, 0.6) !important;
       color: rgba(255, 255, 255, 0.85) !important;
@@ -103,13 +102,8 @@ function injectCustomStyles() {
       pointer-events: none !important;
       transition: opacity 0.2s ease !important;
     }
-    /* hint appears on hover over a blurred card */
-    .ratioyt-blur-host:hover .ratioyt-peek-hint {
+    .ratioyt-cover:hover .ratioyt-cover-hint {
       opacity: 1 !important;
-    }
-    /* once unblurred, hide the hint immediately */
-    .ratioyt-unblurred .ratioyt-peek-hint {
-      display: none !important;
     }
     .ratioyt-hide-badges .ratioyt-badge,
     .ratioyt-hide-badges .ratioyt-row,
@@ -513,11 +507,14 @@ function applyFinalScore(badge, scoreValue, cardElement) {
 }
 
 function clearHideEffect(hostCard) {
-  hostCard.classList.remove("ratioyt-blur-host", "ratioyt-unblurred");
-  // The blur target can be the card itself, which querySelector can't see.
-  hostCard.classList.remove("ratioyt-blur-target");
-  hostCard.querySelector(".ratioyt-blur-target")?.classList.remove("ratioyt-blur-target");
-  hostCard.querySelector(".ratioyt-peek-hint")?.remove();
+  const target =
+    hostCard.querySelector(
+      "#content, .ytLockupViewModelHost, .shortsLockupViewModelHost, .ytShortsLockupViewModelHost, [class*='ThumbnailContainer'], [class*='thumbnail-container'], ytd-thumbnail, #dismissible",
+    ) || hostCard;
+  target.classList.remove("ratioyt-cover-container");
+  target.querySelectorAll(".ratioyt-cover").forEach((el) => el.remove());
+  hostCard.classList.remove("ratioyt-cover-container");
+  hostCard.querySelectorAll(".ratioyt-cover").forEach((el) => el.remove());
 }
 
 function applyHideEffect(hostCard, scoreValue) {
@@ -531,51 +528,48 @@ function applyHideEffect(hostCard, scoreValue) {
     return;
   }
 
-  // Hidden videos are only blurred — nothing is placed on top of them.
-  hostCard.classList.add("ratioyt-blur-host");
-  const mainContent =
+  // Instead of blurring the parent directly (which lets YouTube trigger hover
+  // video preview autoplay), place a backdrop-filter overlay on top of the
+  // visual target. The overlay intercepts pointer events so YouTube never sees
+  // the hover, preventing autoplay. Clicking the overlay reveals the card.
+  const target =
     hostCard.querySelector(
       "#content, .ytLockupViewModelHost, .shortsLockupViewModelHost, .ytShortsLockupViewModelHost, [class*='ThumbnailContainer'], [class*='thumbnail-container'], ytd-thumbnail, #dismissible",
     ) || hostCard;
-  mainContent.classList.add("ratioyt-blur-target");
 
-  // A tiny, quiet hint that appears while hovering a blurred card.
-  if (!mainContent.querySelector(".ratioyt-peek-hint") && !hostCard.querySelector(".ratioyt-peek-hint")) {
-    const hint = document.createElement("div");
-    hint.className = "ratioyt-peek-hint";
-    hint.innerHTML =
-      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+  target.classList.add("ratioyt-cover-container");
+
+  let cover = target.querySelector(":scope > .ratioyt-cover");
+  if (!cover) {
+    cover = document.createElement("div");
+    cover.className = "ratioyt-cover";
+    cover.innerHTML =
+      '<div class="ratioyt-cover-hint">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
       'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
       '<path d="M1.8 12S5.6 5.8 12 5.8 22.2 12 22.2 12 18.4 18.2 12 18.2 1.8 12 1.8 12Z"/>' +
-      '<circle cx="12" cy="12" r="3"/></svg>';
-    (mainContent !== hostCard ? mainContent : hostCard).appendChild(hint);
-  }
+      '<circle cx="12" cy="12" r="3"/></svg>' +
+      '</div>';
 
-  // Hovering does NOT unblur. Only clicking while hovered unblurs the video.
-  // The first click is swallowed so it doesn't open the video.
-  // Once unblurred, further clicks open the video normally.
-  if (hostCard.dataset.ratioytPeekBound !== "true") {
-    hostCard.dataset.ratioytPeekBound = "true";
-
-    hostCard.addEventListener(
-      "click",
-      (e) => {
-        if (!hostCard.classList.contains("ratioyt-blur-host")) return;
-        // If already unblurred, let the click pass through to open the video
-        if (hostCard.classList.contains("ratioyt-unblurred")) return;
-
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        hostCard.classList.add("ratioyt-unblurred");
-      },
-      true, // capture, so YouTube's links/handlers don't navigate
-    );
-
-    hostCard.addEventListener("mouseleave", () => {
-      // Re-blur when the mouse leaves the card
-      hostCard.classList.remove("ratioyt-unblurred");
+    // Click to unblur: swallow click so video does not open, reveal video
+    cover.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      cover.classList.add("ratioyt-unblurred");
     });
+
+    // Re-blur as soon as the mouse leaves the card
+    target.addEventListener("mouseleave", () => {
+      cover.classList.remove("ratioyt-unblurred");
+    });
+    if (target !== hostCard) {
+      hostCard.addEventListener("mouseleave", () => {
+        cover.classList.remove("ratioyt-unblurred");
+      });
+    }
+
+    target.appendChild(cover);
   }
 }
 
