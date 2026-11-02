@@ -10,21 +10,20 @@
   <div class="popup">
 
     <header class="header">
-      <img class="logo" src="../images/logo.png" width="34" height="34" alt="">
+      <img class="logo" src="../images/logo.png" width="40" height="40" alt="">
       <div>
         <h1>RatioYT</h1>
         <p class="subtitle">like/dislike scores for YouTube</p>
       </div>
     </header>
 
-    <div class="divider"></div>
-
     <main class="content">
 
       <section class="section">
         <p class="section-label">Display</p>
-        <div class="row">
-          <label for="scoringSystem" class="label">Score format</label>
+
+        <div class="row row-stacked">
+          <p class="label">Score format</p>
           <div class="select-wrap">
             <select id="scoringSystem">
               <option value="percentage">Percentage</option>
@@ -33,15 +32,15 @@
               <option value="stars">Star rating</option>
             </select>
             <svg viewBox="0 0 12 12" width="11" height="11" class="chevron" aria-hidden="true">
-              <path d="M2 4.5 6 8.5l4-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 4.5 6 8.5l4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
         </div>
 
         <div class="row">
-          <div>
+          <div class="row-text">
             <p class="label">Colour scores</p>
-            <p class="hint">Red to green by rating</p>
+            <p class="hint">Red to green</p>
           </div>
           <label class="toggle">
             <input type="checkbox" id="scoringColour" checked>
@@ -50,9 +49,9 @@
         </div>
 
         <div class="row">
-          <div>
+          <div class="row-text">
             <p class="label">Quiet mode</p>
-            <p class="hint">Hide badges, filter silently</p>
+            <p class="hint">No badges shown</p>
           </div>
           <label class="toggle">
             <input type="checkbox" id="hideOnlyMode">
@@ -61,15 +60,13 @@
         </div>
       </section>
 
-      <div class="divider"></div>
-
       <section class="section">
         <p class="section-label">Filtering</p>
 
         <div class="row">
-          <div>
-            <p class="label">Hide low-rated videos</p>
-            <p class="hint">Home and search — stays until off</p>
+          <div class="row-text">
+            <p class="label">Hide low scores</p>
+            <p class="hint">Blur below threshold</p>
           </div>
           <label class="toggle">
             <input type="checkbox" id="hideLowScore">
@@ -90,8 +87,6 @@
       </section>
 
     </main>
-
-    <div class="divider"></div>
 
     <footer class="footer">
       <div class="links">
