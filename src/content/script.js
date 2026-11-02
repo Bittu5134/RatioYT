@@ -305,7 +305,7 @@ function injectBadge(targetRow) {
   return badge;
 }
 
-function createPlaceholder(card, score) {
+function createPlaceholder(card) {
   const isShort =
     card.matches?.("yt-shorts-lockup-view-model, ytm-shorts-lockup-view-model, ytd-reel-item-renderer") ||
     Boolean(card.querySelector?.("a[href*='/shorts/']"));
@@ -317,18 +317,15 @@ function createPlaceholder(card, score) {
   let aspectStyle = "aspect-ratio: 16 / 9; width: 100%;";
   let minHeightStyle = "min-height: 180px;";
   let marginStyle = "margin-bottom: 24px;";
-  let labelText = "Filtered Video";
 
   if (isShort) {
     aspectStyle = "aspect-ratio: 9 / 16; width: 100%; height: 100%;";
     minHeightStyle = "min-height: 320px;";
     marginStyle = "";
-    labelText = "Filtered Short";
   } else if (rect.height > 0 && rect.height < 140) {
     aspectStyle = `height: ${rect.height}px; width: 100%;`;
     minHeightStyle = "min-height: 80px;";
     marginStyle = "margin-bottom: 8px;";
-    labelText = "Filtered Suggestion";
   }
 
   ph.style.cssText = `
@@ -338,11 +335,8 @@ function createPlaceholder(card, score) {
     border-radius: 12px;
     position: relative;
     overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, rgba(236, 55, 80, 0.12) 0%, rgba(20, 20, 25, 0.7) 50%, rgba(170, 85, 255, 0.12) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(145deg, #0d0d11 0%, #050507 100%);
+    border: 1px solid rgba(255, 255, 255, 0.04);
     box-sizing: border-box;
     user-select: none;
     pointer-events: none;
@@ -350,19 +344,13 @@ function createPlaceholder(card, score) {
 
   const blob = document.createElement("div");
   blob.style.cssText =
-    "position: absolute; inset: -20px; filter: blur(35px); background: radial-gradient(circle at 25% 30%, rgba(236, 55, 80, 0.35), transparent 55%), radial-gradient(circle at 75% 70%, rgba(170, 85, 255, 0.25), transparent 55%); pointer-events: none;";
+    "position: absolute; inset: -20px; filter: blur(40px); background: radial-gradient(circle at 25% 25%, rgba(180, 30, 50, 0.12), transparent 50%), radial-gradient(circle at 75% 75%, rgba(90, 40, 140, 0.08), transparent 50%); pointer-events: none;";
   ph.appendChild(blob);
-
-  const pill = document.createElement("div");
-  pill.style.cssText =
-    "position: relative; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.55); text-transform: uppercase; letter-spacing: 0.09em; display: flex; align-items: center; gap: 6px; background: rgba(0, 0, 0, 0.45); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);";
-  pill.textContent = score !== undefined && score >= 0 ? `${labelText} (${score}%)` : labelText;
-  ph.appendChild(pill);
 
   return ph;
 }
 
-function hideCard(card, score) {
+function hideCard(card) {
   const container = getCardContainer(card);
   container.querySelectorAll("video").forEach((v) => {
     try {
@@ -371,14 +359,14 @@ function hideCard(card, score) {
     } catch (_) {}
   });
 
-  const placeholder = createPlaceholder(card, score);
+  const placeholder = createPlaceholder(card);
   container.replaceChildren(placeholder);
 }
 
 function applyScore(card, badge, score) {
-  // If video is below minimum score threshold, replace it with a gradient blur placeholder
+  // If video is below minimum score threshold, replace it with a dark gradient blur placeholder
   if (userSettings.hideLowScore && score >= 0 && score < userSettings.lowScoreThreshold) {
-    hideCard(card, score);
+    hideCard(card);
     return;
   }
 
