@@ -188,7 +188,9 @@ button:focus-visible {
 }
 
 .brand-logo {
-  border-radius: 8px;
+  height: 24px;
+  width: auto;
+  object-fit: contain;
   flex-shrink: 0;
 }
 
