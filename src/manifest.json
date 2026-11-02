@@ -29,8 +29,7 @@
   ],
   "host_permissions": [
     "https://returnyoutubedislikeapi.com/*",
-    "https://raw.githubusercontent.com/*",
-    "https://raw.githack.com/*"
+    "https://raw.githubusercontent.com/*"
   ],
   "author": "Bittu"
 }
