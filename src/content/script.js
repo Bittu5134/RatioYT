@@ -305,7 +305,64 @@ function injectBadge(targetRow) {
   return badge;
 }
 
-function hideCard(card) {
+function createPlaceholder(card, score) {
+  const isShort =
+    card.matches?.("yt-shorts-lockup-view-model, ytm-shorts-lockup-view-model, ytd-reel-item-renderer") ||
+    Boolean(card.querySelector?.("a[href*='/shorts/']"));
+
+  const rect = card.getBoundingClientRect();
+  const ph = document.createElement("div");
+  ph.className = "ratioyt-placeholder";
+
+  let aspectStyle = "aspect-ratio: 16 / 9; width: 100%;";
+  let minHeightStyle = "min-height: 180px;";
+  let marginStyle = "margin-bottom: 24px;";
+  let labelText = "Filtered Video";
+
+  if (isShort) {
+    aspectStyle = "aspect-ratio: 9 / 16; width: 100%; height: 100%;";
+    minHeightStyle = "min-height: 320px;";
+    marginStyle = "";
+    labelText = "Filtered Short";
+  } else if (rect.height > 0 && rect.height < 140) {
+    aspectStyle = `height: ${rect.height}px; width: 100%;`;
+    minHeightStyle = "min-height: 80px;";
+    marginStyle = "margin-bottom: 8px;";
+    labelText = "Filtered Suggestion";
+  }
+
+  ph.style.cssText = `
+    ${aspectStyle}
+    ${minHeightStyle}
+    ${marginStyle}
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(236, 55, 80, 0.12) 0%, rgba(20, 20, 25, 0.7) 50%, rgba(170, 85, 255, 0.12) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-sizing: border-box;
+    user-select: none;
+    pointer-events: none;
+  `;
+
+  const blob = document.createElement("div");
+  blob.style.cssText =
+    "position: absolute; inset: -20px; filter: blur(35px); background: radial-gradient(circle at 25% 30%, rgba(236, 55, 80, 0.35), transparent 55%), radial-gradient(circle at 75% 70%, rgba(170, 85, 255, 0.25), transparent 55%); pointer-events: none;";
+  ph.appendChild(blob);
+
+  const pill = document.createElement("div");
+  pill.style.cssText =
+    "position: relative; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.55); text-transform: uppercase; letter-spacing: 0.09em; display: flex; align-items: center; gap: 6px; background: rgba(0, 0, 0, 0.45); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);";
+  pill.textContent = score !== undefined && score >= 0 ? `${labelText} (${score}%)` : labelText;
+  ph.appendChild(pill);
+
+  return ph;
+}
+
+function hideCard(card, score) {
   const container = getCardContainer(card);
   container.querySelectorAll("video").forEach((v) => {
     try {
@@ -313,13 +370,15 @@ function hideCard(card) {
       v.src = "";
     } catch (_) {}
   });
-  container.remove();
+
+  const placeholder = createPlaceholder(card, score);
+  container.replaceChildren(placeholder);
 }
 
 function applyScore(card, badge, score) {
-  // If video is below minimum score threshold, completely delete the card from the DOM tree
+  // If video is below minimum score threshold, replace it with a gradient blur placeholder
   if (userSettings.hideLowScore && score >= 0 && score < userSettings.lowScoreThreshold) {
-    hideCard(card);
+    hideCard(card, score);
     return;
   }
 
