@@ -74,7 +74,7 @@ function injectCustomStyles() {
       inset: 0 !important;
       z-index: 100 !important;
       border-radius: 12px !important;
-      background: rgba(15, 15, 15, 0.45) !important;
+      background: rgba(0, 0, 0, 0.5) !important;
       backdrop-filter: blur(20px) brightness(0.45) !important;
       -webkit-backdrop-filter: blur(20px) brightness(0.45) !important;
       cursor: pointer !important;
@@ -93,11 +93,12 @@ function injectCustomStyles() {
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      width: 34px !important;
-      height: 34px !important;
-      border-radius: 50% !important;
-      background: rgba(0, 0, 0, 0.6) !important;
-      color: rgba(255, 255, 255, 0.85) !important;
+      width: 40px !important;
+      height: 40px !important;
+      border-radius: 10px !important;
+      background: #000 !important;
+      border: 2px solid #ffffff !important;
+      color: #ffffff !important;
       opacity: 0 !important;
       pointer-events: none !important;
       transition: opacity 0.2s ease !important;

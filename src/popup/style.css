@@ -1,34 +1,47 @@
 /* ==============================================
-   RatioYT popup — Catppuccin Mocha, flat
+   RatioYT popup — blunt theme
+   Solid colours only. No gradients. Chunky 2px borders.
    ============================================== */
 
 :root {
-  --base:     #1e1e2e;
-  --mantle:   #181825;
-  --crust:    #11111b;
-  --surface0: #313244;
-  --surface1: #45475a;
-  --overlay0: #6c7086;
-  --overlay1: #7f849c;
-  --subtext0: #a6adc8;
-  --text:     #cdd6f4;
+  /* Surfaces */
+  --bg:         #000000;
+  --surface:    #0d0d0d;
+  --surface-2:  #1a1a1a;
 
-  --mauve:     #cba6f7;
-  --pink:      #f5c2e7;
-  --rosewater: #f5e0dc;
-  --green:     #a6e3a1;
+  /* Borders */
+  --line:        #2a2a2a;
+  --line-strong: #5c5c5c;
 
-  --r-sm: 8px;
-  --r-md: 12px;
+  /* Text */
+  --text:  #ffffff;
+  --muted: #b3b3b3;
+  --dim:   #858585;
+
+  /* Solid accents */
+  --blue:   #9cccff;
+  --purple: #aa55ff;
+  --red:    #ec3750;
+  --green:  #55ff7f;
+  --yellow: #ffd23f;
+
+  /* Radii */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   width: 320px;
-  background: var(--base);
+  background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font);
   font-size: 13px;
   line-height: 1.5;
   user-select: none;
@@ -38,7 +51,7 @@ body {
 /* ── Wrapper ── */
 
 .popup {
-  padding: 14px 14px 12px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -54,27 +67,29 @@ body {
 
 .logo {
   flex-shrink: 0;
-  border-radius: 10px;
+  border-radius: var(--r-sm);
 }
 
 h1 {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--rosewater);
-  line-height: 1.2;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
 .subtitle {
-  font-size: 11px;
-  color: var(--overlay1);
-  margin-top: 1px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--dim);
+  margin-top: 2px;
 }
 
 /* ── Divider ── */
 
 .divider {
-  height: 1px;
-  background: var(--surface0);
+  height: 2px;
+  background: var(--line);
+  border-radius: 999px;
   flex-shrink: 0;
 }
 
@@ -90,15 +105,19 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 12px;
 }
 
 .section-label {
+  font-family: var(--mono);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 1.4px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--mauve);
-  margin-top: 2px;
+  color: var(--blue);
 }
 
 /* ── Row (label + control) ── */
@@ -108,18 +127,18 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 22px;
+  min-height: 28px;
 }
 
 .label {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text);
 }
 
 .hint {
   font-size: 11px;
-  color: var(--overlay0);
+  color: var(--dim);
   margin-top: 1px;
 }
 
@@ -134,22 +153,21 @@ select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background: var(--surface0);
+  background: var(--bg);
   color: var(--text);
-  border: none;
+  border: 2px solid var(--line-strong);
   border-radius: var(--r-sm);
-  padding: 6px 28px 6px 10px;
+  padding: 6px 26px 6px 10px;
+  font-family: var(--font);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   outline: none;
-  background-image: none;
+  transition: border-color 120ms ease-out;
 }
 
-select:focus {
-  outline: 2px solid var(--mauve);
-  outline-offset: 1px;
-}
+select:hover { border-color: var(--blue); }
+select:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
 
 .chevron {
   position: absolute;
@@ -157,15 +175,15 @@ select:focus {
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
-  color: var(--overlay1);
+  color: var(--muted);
 }
 
-/* ── Toggle ── */
+/* ── Toggle (chunky, square knob) ── */
 
 .toggle {
   position: relative;
-  width: 32px;
-  height: 18px;
+  width: 44px;
+  height: 24px;
   flex-shrink: 0;
   cursor: pointer;
 }
@@ -180,48 +198,48 @@ select:focus {
 .track {
   position: absolute;
   inset: 0;
-  background: var(--surface0);
-  border-radius: 18px;
-  transition: background 0.2s;
+  background: var(--bg);
+  border: 2px solid var(--line-strong);
+  border-radius: var(--r-xs);
+  transition: background-color 140ms ease-out, border-color 140ms ease-out;
 }
 
 .thumb {
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--overlay1);
-  transition: transform 0.2s, background 0.2s;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--line-strong);
+  transition: transform 140ms cubic-bezier(.2, .8, .2, 1), background-color 140ms ease-out;
 }
 
-.toggle input:checked ~ .track { background: var(--green); }
-.toggle input:checked ~ .track .thumb {
-  transform: translateX(14px);
-  background: var(--crust);
+.toggle input:checked ~ .track {
+  background: var(--green);
+  border-color: var(--green);
 }
+
+.toggle input:checked ~ .track .thumb {
+  transform: translateX(20px);
+  background: var(--bg);
+}
+
 .toggle input:focus-visible ~ .track {
-  outline: 2px solid var(--mauve);
+  outline: 3px solid var(--yellow);
   outline-offset: 2px;
 }
 
 /* ── Nested panel ── */
 
 .nested {
-  background: var(--mantle);
-  border: 1px solid var(--surface0);
+  background: var(--bg);
+  border: 2px dashed var(--line-strong);
   border-radius: var(--r-md);
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  animation: slideIn 0.2s ease;
-}
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(-3px); }
-  to   { opacity: 1; transform: translateY(0); }
+  gap: 9px;
 }
 
 .threshold-row {
@@ -231,52 +249,63 @@ select:focus {
 }
 
 .pill {
+  font-family: var(--mono);
   font-size: 11px;
   font-weight: 700;
-  color: var(--mauve);
-  background: var(--surface0);
+  color: var(--bg);
+  background: var(--yellow);
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: var(--r-xs);
 }
 
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 5px;
-  background: var(--surface0);
-  border-radius: 3px;
+  height: 8px;
+  background: var(--bg);
+  border: 2px solid var(--line-strong);
+  border-radius: var(--r-xs);
   outline: none;
   cursor: pointer;
 }
 
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: var(--mauve);
-  border: 2px solid var(--rosewater);
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--yellow);
+  border: 2px solid var(--bg);
+  margin-top: -6px;
   cursor: pointer;
-  transition: transform 0.15s;
 }
 
-input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: transparent;
+}
 
 input[type="range"]::-moz-range-thumb {
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: var(--mauve);
-  border: 2px solid var(--rosewater);
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--yellow);
+  border: 2px solid var(--bg);
   cursor: pointer;
+}
+
+input[type="range"]:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 3px;
 }
 
 .ticks {
   display: flex;
   justify-content: space-between;
+  font-family: var(--mono);
   font-size: 10px;
-  color: var(--overlay0);
+  color: var(--dim);
 }
 
 /* ── Footer ── */
@@ -296,28 +325,31 @@ input[type="range"]::-moz-range-thumb {
   flex: 1;
   text-align: center;
   font-size: 12px;
-  font-weight: 600;
-  color: var(--subtext0);
+  font-weight: 700;
+  color: var(--muted);
   text-decoration: none;
-  padding: 7px 10px;
+  padding: 8px 6px;
   border-radius: var(--r-sm);
-  background: var(--surface0);
-  transition: color 0.15s, background 0.15s;
+  background: var(--bg);
+  border: 2px solid var(--line-strong);
+  transition: color 120ms ease-out, border-color 120ms ease-out, background-color 120ms ease-out;
 }
 
 .links a:hover {
-  background: var(--surface1);
-  color: var(--text);
+  color: var(--blue);
+  border-color: var(--blue);
 }
 
 .links a.donate {
-  background: var(--pink);
-  color: var(--crust);
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--bg);
 }
 
 .links a.donate:hover {
-  background: var(--rosewater);
-  color: var(--crust);
+  background: var(--bg);
+  border-color: var(--red);
+  color: var(--red);
 }
 
 /* ── Utility ── */
