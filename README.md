@@ -17,7 +17,7 @@ Scores come from the [Return YouTube Dislike](https://returnyoutubedislike.com) 
 - Score badges on video cards: percentage, 10-point ratio, smiley faces, or 5-star SVGs with half stars
 - Optional dynamic score colouring (red → green)
 - Quiet mode: filter the feed without showing badges
-- Hide low-rated videos (home & search) behind a soft blur — click to reveal
+- Hide low-rated videos (home & search) behind a blur that stays until you turn it off
 - Adjustable minimum-score threshold
 - Remote-updateable selector config, so YouTube UI changes don't need an extension update
 

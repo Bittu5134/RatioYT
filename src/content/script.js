@@ -11,9 +11,6 @@ const DEFAULTS = {
 };
 let userSettings = { ...DEFAULTS };
 
-// Hidden videos are always blurred; hovering reveals them while hovered.
-const PEEK_MS = 1000;
-
 // A failed lookup is retried after this long, so a transient API error
 // doesn't leave a "--%" placeholder stuck until the next navigation.
 const RETRY_AFTER_MS = 5 * 60 * 1000;
@@ -72,39 +69,14 @@ function injectCustomStyles() {
     .ratioyt-cover {
       position: absolute !important;
       inset: 0 !important;
-      z-index: 100 !important;
+      z-index: 2147483647 !important;
       border-radius: 12px !important;
       background: rgba(0, 0, 0, 0.5) !important;
       backdrop-filter: blur(20px) brightness(0.45) !important;
       -webkit-backdrop-filter: blur(20px) brightness(0.45) !important;
-      cursor: pointer !important;
+      cursor: default !important;
       user-select: none !important;
       pointer-events: auto !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      transition: opacity 0.25s ease !important;
-    }
-    .ratioyt-cover.ratioyt-unblurred {
-      opacity: 0 !important;
-      pointer-events: none !important;
-    }
-    .ratioyt-cover-hint {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      width: 40px !important;
-      height: 40px !important;
-      border-radius: 10px !important;
-      background: #000 !important;
-      border: 2px solid #ffffff !important;
-      color: #ffffff !important;
-      opacity: 0 !important;
-      pointer-events: none !important;
-      transition: opacity 0.2s ease !important;
-    }
-    .ratioyt-cover:hover .ratioyt-cover-hint {
-      opacity: 1 !important;
     }
     .ratioyt-hide-badges .ratioyt-badge,
     .ratioyt-hide-badges .ratioyt-row,
@@ -529,10 +501,10 @@ function applyHideEffect(hostCard, scoreValue) {
     return;
   }
 
-  // Instead of blurring the parent directly (which lets YouTube trigger hover
-  // video preview autoplay), place a backdrop-filter overlay on top of the
-  // visual target. The overlay intercepts pointer events so YouTube never sees
-  // the hover, preventing autoplay. Clicking the overlay reveals the card.
+  // A single overlay with the maximum z-index covers the thumbnail. It
+  // swallows pointer events, so YouTube never sees the hover and the preview
+  // never autoplays, and clicks do nothing. There is deliberately no way to
+  // peek: the only way to watch a hidden video is to turn the setting off.
   const target =
     hostCard.querySelector(
       "#content, .ytLockupViewModelHost, .shortsLockupViewModelHost, .ytShortsLockupViewModelHost, [class*='ThumbnailContainer'], [class*='thumbnail-container'], ytd-thumbnail, #dismissible",
@@ -540,38 +512,11 @@ function applyHideEffect(hostCard, scoreValue) {
 
   target.classList.add("ratioyt-cover-container");
 
-  let cover = target.querySelector(":scope > .ratioyt-cover");
-  if (!cover) {
-    cover = document.createElement("div");
-    cover.className = "ratioyt-cover";
-    cover.innerHTML =
-      '<div class="ratioyt-cover-hint">' +
-      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-      'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M1.8 12S5.6 5.8 12 5.8 22.2 12 22.2 12 18.4 18.2 12 18.2 1.8 12 1.8 12Z"/>' +
-      '<circle cx="12" cy="12" r="3"/></svg>' +
-      '</div>';
+  if (target.querySelector(":scope > .ratioyt-cover")) return;
 
-    // Click to unblur: swallow click so video does not open, reveal video
-    cover.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      cover.classList.add("ratioyt-unblurred");
-    });
-
-    // Re-blur as soon as the mouse leaves the card
-    target.addEventListener("mouseleave", () => {
-      cover.classList.remove("ratioyt-unblurred");
-    });
-    if (target !== hostCard) {
-      hostCard.addEventListener("mouseleave", () => {
-        cover.classList.remove("ratioyt-unblurred");
-      });
-    }
-
-    target.appendChild(cover);
-  }
+  const cover = document.createElement("div");
+  cover.className = "ratioyt-cover";
+  target.appendChild(cover);
 }
 
 // =========================================
