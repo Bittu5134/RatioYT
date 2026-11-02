@@ -126,6 +126,17 @@ button:focus-visible {
   color: var(--purple);
 }
 
+.btn-donate {
+  background: var(--red);
+  color: #000;
+  border-color: var(--red);
+}
+
+.btn-donate:hover {
+  background: #000;
+  color: var(--red);
+}
+
 .btn-secondary {
   background: #000;
   color: var(--text);
@@ -217,6 +228,16 @@ button:focus-visible {
 .icon-link:hover {
   color: var(--text);
   border-color: var(--line-strong);
+}
+
+.icon-link.donate-icon {
+  color: var(--red);
+}
+
+.icon-link.donate-icon:hover {
+  color: #000;
+  background: var(--red);
+  border-color: var(--red);
 }
 
 /* ── Hero ── */
@@ -485,6 +506,14 @@ button:focus-visible {
 
 .footer-links a:hover {
   color: var(--blue);
+}
+
+.footer-links a.footer-donate {
+  color: var(--red);
+}
+
+.footer-links a.footer-donate:hover {
+  color: #fff;
 }
 
 /* ── Responsive ── */
