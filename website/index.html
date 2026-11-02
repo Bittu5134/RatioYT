@@ -3,486 +3,212 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RatioYT — Real Like/Dislike Ratings for YouTube</title>
-  <meta name="description" content="Open-source browser extension that brings back like/dislike ratios, ratings, and stars to YouTube video cards, with smart low-score filtering.">
-  <link rel="icon" type="image/svg+xml" href="./logo.svg">
+  <title>RatioYT — Like/dislike ratings for YouTube</title>
+  <meta name="description" content="RatioYT shows like/dislike ratio scores on YouTube video cards, caches them on-device, and can blur low-rated videos. Open source, no telemetry.">
+  <link rel="icon" type="image/png" href="./logo.png">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
   <!-- Navigation -->
-  <header class="navbar">
-    <div class="nav-container">
-      <a href="#" class="brand">
-        <svg class="brand-logo" viewBox="0 0 128 128" width="28" height="28" aria-hidden="true">
-          <rect x="4" y="4" width="120" height="120" rx="32" fill="#f5c2e7"/>
-          <g transform="rotate(-8 64 66)">
-            <path fill="#fde8d7" d="M38 96h30.2c3.3 0 6.2-2 7.3-5l11.9-27.6c.5-1.1.7-2.3.7-3.5v-7.5c0-4.4-3.6-8-8-8H65.9l3.8-18.3.1-1.3c0-1.6-.7-3.1-1.7-4.2L64 15 37.6 41.4c-1.5 1.5-2.4 3.5-2.4 5.7v41c0 4.3 3.5 7.9 7.9 7.9z"/>
-            <rect x="17" y="46" width="18" height="50" rx="6" fill="#fde8d7"/>
-          </g>
-        </svg>
+  <header class="navbar" id="top">
+    <div class="container nav-container">
+      <a href="#top" class="brand">
+        <img class="brand-logo" src="./logo.png" width="26" height="26" alt="">
         <span class="brand-name">RatioYT</span>
       </a>
 
-      <nav class="nav-links">
+      <nav class="nav-links" aria-label="Sections">
         <a href="#features">Features</a>
-        <a href="#stores">Downloads</a>
-        <a href="#demo">Preview</a>
+        <a href="#formats">Formats</a>
+        <a href="#install">Install</a>
         <a href="#faq">FAQ</a>
       </nav>
 
-      <div class="nav-actions">
-        <a href="#stores" class="btn btn-primary btn-sm">Get RatioYT</a>
-        <a href="https://github.com/Bittu5134/RatioYT" target="_blank" rel="noopener" class="icon-link" aria-label="GitHub Repository">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-          </svg>
-        </a>
-      </div>
+      <a href="https://github.com/Bittu5134/RatioYT" target="_blank" rel="noopener" class="icon-link" aria-label="GitHub repository">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+      </a>
     </div>
   </header>
 
   <main>
 
-    <!-- Hero Section (Mihon-inspired clean split) -->
-    <section class="hero-section">
-      <div class="container hero-grid">
-        <div class="hero-content">
-          <span class="hero-brand">RatioYT</span>
-          <h1 class="hero-title">Real ratings for YouTube.</h1>
-          <p class="hero-subtitle">
-            See authentic like/dislike ratios, ratings, and star scores directly on video cards across your feed, search, shorts, and playlists. Filter low-rated videos quietly behind a click-to-reveal blur.
-          </p>
-
-          <div class="hero-actions">
-            <a href="#stores" class="btn btn-primary">Install extension</a>
-            <a href="#demo" class="btn btn-secondary">Try live preview</a>
-          </div>
-
-          <div class="release-card">
-            <div class="release-info">
-              <span class="release-label">Stable release</span>
-              <span class="release-title">RatioYT v1.0.0</span>
-              <span class="release-date">Open source · Zero telemetry</span>
-            </div>
-            <a href="#stores" class="btn btn-accent btn-sm">
-              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
-                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
-              </svg>
-              Download
-            </a>
-          </div>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container">
+        <p class="eyebrow">Open source · GPL-3.0 · No telemetry</p>
+        <h1 class="hero-title">Like/dislike ratings, back on YouTube.</h1>
+        <p class="hero-lede">
+          RatioYT puts a like/dislike ratio on every YouTube video card — home, search, Shorts,
+          playlists and queues — and can quietly blur the low-rated ones. Scores are cached on your
+          device, so browsing stays fast.
+        </p>
+        <div class="hero-actions">
+          <a href="#install" class="btn btn-primary">Get RatioYT</a>
+          <a href="https://github.com/Bittu5134/RatioYT" target="_blank" rel="noopener" class="text-link">Source on GitHub →</a>
         </div>
+      </div>
+    </section>
 
-        <div class="hero-visual">
-          <div class="preview-frame">
-            <div class="frame-bar">
-              <div class="frame-dots">
-                <span></span><span></span><span></span>
-              </div>
-              <span class="frame-title">youtube.com</span>
-            </div>
+    <!-- Features -->
+    <section class="section" id="features">
+      <div class="container">
+        <header class="section-head">
+          <h2 class="section-title">Features</h2>
+        </header>
 
-            <div class="mock-card" id="heroMockCard">
-              <div class="mock-thumb" id="mockThumb">
-                <div class="mock-thumb-art"></div>
-                <span class="mock-duration">18:42</span>
+        <dl class="feature-list">
+          <div class="feature-item">
+            <dt>Score badges</dt>
+            <dd>A like/dislike ratio on video cards across home, search, Shorts, playlists and queues.</dd>
+          </div>
+          <div class="feature-item">
+            <dt>Dynamic colour</dt>
+            <dd>Each badge runs from red to green with the score, so a bad video reads at a glance.</dd>
+          </div>
+          <div class="feature-item">
+            <dt>Quiet mode</dt>
+            <dd>Hides the badges for a clean feed while scores are still fetched in the background.</dd>
+          </div>
+          <div class="feature-item">
+            <dt>Low-rated blur</dt>
+            <dd>Videos under your minimum score (set from 0–100%) are blurred. Click to reveal; hovering never triggers autoplay.</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
 
-                <!-- RatioYT Cover Overlay (for blur preview) -->
-                <div class="mock-cover hidden" id="mockCover">
-                  <div class="mock-cover-hint">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M1.8 12S5.6 5.8 12 5.8 22.2 12 22.2 12 18.4 18.2 12 18.2 1.8 12 1.8 12Z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
+    <!-- Score formats -->
+    <section class="section" id="formats">
+      <div class="container">
+        <header class="section-head">
+          <h2 class="section-title">Score formats</h2>
+          <p class="section-desc">Four ways to read the same number. Colour runs red to green across all of them.</p>
+        </header>
 
-              <div class="mock-details">
-                <div class="mock-avatar"></div>
-                <div class="mock-meta">
-                  <h3 class="mock-title">Understanding YouTube's Hidden Feedback</h3>
-                  <p class="mock-channel">TechCraft · 1.4M views</p>
-                  <p class="mock-subline">
-                    <span>2 years ago</span>
-                    <span class="mock-delim" id="mockDelim">•</span>
-                    <span class="mock-badge" id="heroBadge">94%</span>
-                  </p>
-                  <p class="mock-nextline hidden" id="heroNextLineBadge">
-                    <span class="mock-badge" id="heroBadgeNext">94%</span>
-                  </p>
-                </div>
-              </div>
-            </div>
+        <div class="table-wrap">
+          <table class="spec-table">
+            <thead>
+              <tr>
+                <th scope="col">Format</th>
+                <th scope="col">Example</th>
+                <th scope="col">Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Percentage</td>
+                <td class="mono">73%</td>
+                <td>Like share of all votes</td>
+              </tr>
+              <tr>
+                <td>Out of 10</td>
+                <td class="mono">7/10</td>
+                <td>Same score, rescaled</td>
+              </tr>
+              <tr>
+                <td>Smiley</td>
+                <td class="mono">😊 😐 😞</td>
+                <td>Good at 70+, mixed at 40+, poor below</td>
+              </tr>
+              <tr>
+                <td>Stars</td>
+                <td class="mono">★★★½☆</td>
+                <td>Five-star scale, half-star steps</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-            <!-- Mini interactive switcher -->
-            <div class="hero-controls">
-              <span class="controls-label">Preview score format:</span>
-              <div class="format-chips">
-                <button type="button" class="chip active" data-format="percentage">94%</button>
-                <button type="button" class="chip" data-format="decimal">9.4/10</button>
-                <button type="button" class="chip" data-format="smiley">😊</button>
-                <button type="button" class="chip" data-format="stars">★★★★½</button>
-                <button type="button" class="chip toggle-chip" id="toggleBlurBtn">Test blur filter</button>
-              </div>
-            </div>
+    <!-- How it works -->
+    <section class="section" id="data">
+      <div class="container">
+        <header class="section-head">
+          <h2 class="section-title">How it works</h2>
+        </header>
+
+        <dl class="feature-list">
+          <div class="feature-item">
+            <dt>Score source</dt>
+            <dd>Ratings come from the third-party Return YouTube Dislike API. Accuracy and uptime depend on that service.</dd>
+          </div>
+          <div class="feature-item">
+            <dt>Local cache</dt>
+            <dd>Fetched scores are stored in your browser's IndexedDB for seven days, so repeat views don't hit the network.</dd>
+          </div>
+          <div class="feature-item">
+            <dt>Selector updates</dt>
+            <dd>A remote config keeps the extension's YouTube selectors current, so UI changes don't require a new release.</dd>
+          </div>
+          <div class="feature-item">
+            <dt>Privacy</dt>
+            <dd>No telemetry, trackers or analytics. The only outbound requests are score lookups and that config refresh.</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- Install -->
+    <section class="section" id="install">
+      <div class="container">
+        <header class="section-head">
+          <h2 class="section-title">Install</h2>
+        </header>
+
+        <div class="install-panel">
+          <div class="install-info">
+            <p class="install-platforms">Chrome · Firefox · Edge · Opera</p>
+            <p class="install-note">
+              Distributed as source releases on GitHub. Load the unpacked build, or grab the packaged
+              release for your browser.
+            </p>
+          </div>
+          <div class="install-actions">
+            <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener" class="btn btn-primary">Download latest release</a>
+            <a href="https://github.com/Bittu5134/RatioYT" target="_blank" rel="noopener" class="btn btn-secondary">Read the source</a>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Browser Extension Stores Section -->
-    <section class="section stores-section" id="stores">
+    <!-- FAQ -->
+    <section class="section" id="faq">
       <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">Available for your browser.</h2>
-          <p class="section-desc">Install RatioYT on your preferred browser with one click, or grab the source release directly.</p>
-        </div>
+        <header class="section-head">
+          <h2 class="section-title">FAQ</h2>
+        </header>
 
-        <div class="stores-grid">
-          <!-- Chrome Web Store -->
-          <div class="store-card">
-            <div class="store-icon">
-              <svg viewBox="0 0 48 48" width="40" height="40">
-                <circle cx="24" cy="24" r="20" fill="#313244"/>
-                <circle cx="24" cy="24" r="8" fill="#89b4fa"/>
-                <path d="M24 16h14.7A16 16 0 0013.4 9.2L20.8 22A8 8 0 0124 16z" fill="#f38ba8"/>
-                <path d="M24 32a8 8 0 01-6.9-4L9.7 15.2A16 16 0 0010 30.5L20.5 24a8 8 0 013.5 8z" fill="#a6e3a1"/>
-                <path d="M24 32a8 8 0 006.9-4L38.3 40.8A16 16 0 0118.8 41.5L24 32.5a8 8 0 000-.5z" fill="#f9e2af"/>
-              </svg>
-            </div>
-            <div class="store-info">
-              <h3 class="store-name">Chrome Web Store</h3>
-              <p class="store-compat">Google Chrome · Brave · Arc · Vivaldi</p>
-            </div>
-            <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener" class="btn btn-store">
-              Add to Chrome
-            </a>
-          </div>
-
-          <!-- Firefox Add-ons -->
-          <div class="store-card">
-            <div class="store-icon">
-              <svg viewBox="0 0 48 48" width="40" height="40">
-                <circle cx="24" cy="24" r="20" fill="#313244"/>
-                <circle cx="24" cy="24" r="10" fill="#fab387"/>
-                <circle cx="25" cy="23" r="6" fill="#f38ba8"/>
-                <path d="M38 24a14 14 0 11-28 0 14 14 0 0128 0z" fill="none" stroke="#fab387" stroke-width="3"/>
-              </svg>
-            </div>
-            <div class="store-info">
-              <h3 class="store-name">Firefox Add-ons</h3>
-              <p class="store-compat">Mozilla Firefox · LibreWolf · Floorp · Zen</p>
-            </div>
-            <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener" class="btn btn-store">
-              Get for Firefox
-            </a>
-          </div>
-
-          <!-- Microsoft Edge Add-ons -->
-          <div class="store-card">
-            <div class="store-icon">
-              <svg viewBox="0 0 48 48" width="40" height="40">
-                <circle cx="24" cy="24" r="20" fill="#313244"/>
-                <path d="M24 10c7.7 0 14 6.3 14 14a13.9 13.9 0 01-4.2 10l-4.8-4.8a7 7 0 002-5.2c0-3.9-3.1-7-7-7-1.8 0-3.4.7-4.6 1.8L14.6 14A13.9 13.9 0 0124 10z" fill="#89dceb"/>
-                <circle cx="24" cy="26" r="6" fill="#89b4fa"/>
-              </svg>
-            </div>
-            <div class="store-info">
-              <h3 class="store-name">Edge Add-ons</h3>
-              <p class="store-compat">Microsoft Edge</p>
-            </div>
-            <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener" class="btn btn-store">
-              Get for Edge
-            </a>
-          </div>
-
-          <!-- Opera Add-ons -->
-          <div class="store-card">
-            <div class="store-icon">
-              <svg viewBox="0 0 48 48" width="40" height="40">
-                <circle cx="24" cy="24" r="20" fill="#313244"/>
-                <ellipse cx="24" cy="24" rx="7" ry="12" fill="none" stroke="#f38ba8" stroke-width="4"/>
-              </svg>
-            </div>
-            <div class="store-info">
-              <h3 class="store-name">Opera Add-ons</h3>
-              <p class="store-compat">Opera · Opera GX</p>
-            </div>
-            <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener" class="btn btn-store">
-              Get for Opera
-            </a>
-          </div>
-
-          <!-- GitHub Releases / Manual Install -->
-          <div class="store-card">
-            <div class="store-icon">
-              <svg viewBox="0 0 48 48" width="40" height="40">
-                <circle cx="24" cy="24" r="20" fill="#313244"/>
-                <path d="M24 12v14m-5-5l5 5 5-5M15 31h18" fill="none" stroke="#cdd6f4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div class="store-info">
-              <h3 class="store-name">Direct Release</h3>
-              <p class="store-compat">Standalone ZIP · CRX · XPI source</p>
-            </div>
-            <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener" class="btn btn-store">
-              GitHub Releases
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Core Features Section (Mihon-inspired 3-column cards) -->
-    <section class="section features-section" id="features">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">Built for cleaner browsing.</h2>
-          <p class="section-desc">Simple, thoughtful features designed to restore honesty to YouTube recommendations.</p>
-        </div>
-
-        <div class="features-grid">
-          <!-- Feature 1 -->
-          <div class="feature-card">
-            <div class="feature-icon icon-mauve">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
-              </svg>
-            </div>
-            <h3 class="feature-title">Community ratings</h3>
-            <p class="feature-text">
-              Powered by the Return YouTube Dislike API. Shows accurate, community-collected rating ratios on feed cards, search results, shorts, and playlist queues.
-            </p>
-          </div>
-
-          <!-- Feature 2 -->
-          <div class="feature-card">
-            <div class="feature-icon icon-pink">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-              </svg>
-            </div>
-            <h3 class="feature-title">Four score styles</h3>
-            <p class="feature-text">
-              Display scores however you prefer: classic percentages (96%), 10-point decimals (9.6 / 10), simple smiley emojis (😊 / 😐 / 😞), or 5-star SVGs with half stars.
-            </p>
-          </div>
-
-          <!-- Feature 3 -->
-          <div class="feature-card">
-            <div class="feature-icon icon-peach">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-              </svg>
-            </div>
-            <h3 class="feature-title">Click-to-reveal blur</h3>
-            <p class="feature-text">
-              Low-scoring clickbait videos below your chosen threshold are blurred automatically. Hover to see the subtle peek hint, click to reveal, and move away to re-blur.
-            </p>
-          </div>
-
-          <!-- Feature 4 -->
-          <div class="feature-card">
-            <div class="feature-icon icon-green">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
-              </svg>
-            </div>
-            <h3 class="feature-title">No hover autoplay</h3>
-            <p class="feature-text">
-              The blur overlay sits on top of the card and blocks pointer events from reaching YouTube's thumbnail. Hovering over a hidden video will never trigger noisy autoplay previews.
-            </p>
-          </div>
-
-          <!-- Feature 5 -->
-          <div class="feature-card">
-            <div class="feature-icon icon-blue">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <ellipse cx="12" cy="5" rx="9" ry="3"/>
-                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
-                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
-              </svg>
-            </div>
-            <h3 class="feature-title">Local IndexedDB cache</h3>
-            <p class="feature-text">
-              Fetched scores are cached in your browser's IndexedDB for 7 days. Repeated views load instantly with zero extra API network requests.
-            </p>
-          </div>
-
-          <!-- Feature 6 -->
-          <div class="feature-card">
-            <div class="feature-icon icon-rosewater">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-            </div>
-            <h3 class="feature-title">Private and lightweight</h3>
-            <p class="feature-text">
-              Zero trackers, zero analytics, zero external dependencies. The extension only contacts the Return YouTube Dislike API to lookup scores.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Interactive Live Demo Section -->
-    <section class="section demo-section" id="demo">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">Try the live settings preview.</h2>
-          <p class="section-desc">Experience how RatioYT displays ratings and handles hidden videos right on your screen.</p>
-        </div>
-
-        <div class="demo-wrapper">
-          <!-- Left: Extension Settings Mockup -->
-          <div class="demo-sidebar">
-            <div class="demo-popup">
-              <div class="demo-popup-header">
-                <svg viewBox="0 0 128 128" width="28" height="28" aria-hidden="true">
-                  <rect x="4" y="4" width="120" height="120" rx="32" fill="#f5c2e7"/>
-                  <g transform="rotate(-8 64 66)">
-                    <path fill="#fde8d7" d="M38 96h30.2c3.3 0 6.2-2 7.3-5l11.9-27.6c.5-1.1.7-2.3.7-3.5v-7.5c0-4.4-3.6-8-8-8H65.9l3.8-18.3.1-1.3c0-1.6-.7-3.1-1.7-4.2L64 15 37.6 41.4c-1.5 1.5-2.4 3.5-2.4 5.7v41c0 4.3 3.5 7.9 7.9 7.9z"/>
-                    <rect x="17" y="46" width="18" height="50" rx="6" fill="#fde8d7"/>
-                  </g>
-                </svg>
-                <div>
-                  <h4>RatioYT</h4>
-                  <p>like/dislike scores for YouTube</p>
-                </div>
-              </div>
-
-              <div class="demo-divider"></div>
-
-              <div class="demo-controls">
-                <span class="demo-section-label">Display</span>
-                <div class="demo-row">
-                  <span>Score format</span>
-                  <select id="interactiveFormatSelect" class="demo-select">
-                    <option value="percentage">Percentage</option>
-                    <option value="decimal">10-point ratio</option>
-                    <option value="smiley">Smiley faces</option>
-                    <option value="stars">Star rating</option>
-                  </select>
-                </div>
-
-                <div class="demo-row">
-                  <div>
-                    <span>Colour scores</span>
-                    <small>Red to green by rating</small>
-                  </div>
-                  <label class="demo-switch">
-                    <input type="checkbox" id="interactiveColourToggle" checked>
-                    <span class="demo-slider"></span>
-                  </label>
-                </div>
-
-                <div class="demo-divider"></div>
-
-                <span class="demo-section-label">Filtering</span>
-                <div class="demo-row">
-                  <div>
-                    <span>Hide low-rated videos</span>
-                    <small>Home and search</small>
-                  </div>
-                  <label class="demo-switch">
-                    <input type="checkbox" id="interactiveBlurToggle">
-                    <span class="demo-slider"></span>
-                  </label>
-                </div>
-
-                <div class="demo-row">
-                  <div>
-                    <span>Force long text (wrap test)</span>
-                    <small>Move badge to next line</small>
-                  </div>
-                  <label class="demo-switch">
-                    <input type="checkbox" id="interactiveWrapToggle">
-                    <span class="demo-slider"></span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right: YouTube Card Preview -->
-          <div class="demo-preview">
-            <div class="demo-preview-card" id="demoCard">
-              <div class="demo-card-thumb" id="demoThumb">
-                <div class="demo-thumb-art"></div>
-                <span class="demo-duration">24:10</span>
-
-                <!-- Blur overlay for demo -->
-                <div class="demo-cover hidden" id="demoCover">
-                  <div class="demo-cover-hint">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M1.8 12S5.6 5.8 12 5.8 22.2 12 22.2 12 18.4 18.2 12 18.2 1.8 12 1.8 12Z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div class="demo-card-body">
-                <div class="demo-card-avatar"></div>
-                <div class="demo-card-info">
-                  <h3 class="demo-card-title" id="demoCardTitle">Top 10 Programming Languages of 2026</h3>
-                  <p class="demo-card-channel" id="demoCardChannel">Tech Digest</p>
-                  <p class="demo-card-meta" id="demoCardMetaLine">
-                    <span id="demoViews">450K views • 3 days ago</span>
-                    <span class="demo-delim" id="demoDelim">•</span>
-                    <span class="demo-badge" id="demoBadge">88%</span>
-                  </p>
-                  <p class="demo-nextline-row hidden" id="demoNextLineRow">
-                    <span class="demo-badge" id="demoNextBadge">88%</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-            <p class="demo-hint-text">
-              Try switching score formats on the left, or toggle the blur filter and click the card to reveal it.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- FAQ Section -->
-    <section class="section faq-section" id="faq">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">Frequently asked questions.</h2>
-        </div>
-
-        <div class="faq-grid">
+        <div class="faq-list">
           <div class="faq-item">
-            <h3 class="faq-question">Where do the like and dislike numbers come from?</h3>
+            <h3 class="faq-question">Where do the scores come from?</h3>
             <p class="faq-answer">
-              RatioYT queries the public Return YouTube Dislike API, which calculates ratings from archived dislike counts before YouTube removed them and continuous community contribution data.
+              From the public Return YouTube Dislike API, which estimates like/dislike counts from
+              archived data and community contributions. RatioYT does not calculate ratings itself.
             </p>
           </div>
-
           <div class="faq-item">
-            <h3 class="faq-question">Why does the blur overlay prevent video autoplay?</h3>
+            <h3 class="faq-question">Does it send my viewing data anywhere?</h3>
             <p class="faq-answer">
-              When a low-rated video is hidden, RatioYT places an overlay over the thumbnail with pointer capture. Mouse events hit our overlay instead of YouTube's thumbnail, preventing YouTube's preview player from auto-starting.
+              No. There is no telemetry, tracking or analytics. The only outbound requests are score
+              lookups and the selector-config refresh described above.
             </p>
           </div>
-
           <div class="faq-item">
-            <h3 class="faq-question">How does unblurring work?</h3>
+            <h3 class="faq-question">Why is a video blurred, and how do I reveal it?</h3>
             <p class="faq-answer">
-              Hovering over a hidden video keeps it blurred and displays a subtle eye icon. Clicking the card unblurs it so you can see it while hovering. When your mouse leaves the card, it re-blurs automatically.
+              Videos scoring below your minimum threshold are covered by a blur overlay. Click the
+              card to reveal it; it re-blurs when your mouse leaves.
             </p>
           </div>
-
           <div class="faq-item">
-            <h3 class="faq-question">Does RatioYT collect any personal data?</h3>
+            <h3 class="faq-question">How do I report a bug or a wrong score?</h3>
             <p class="faq-answer">
-              None. RatioYT contains zero analytics, zero trackers, and zero telemetry. It only makes requests to fetch video scores and caches them in your local browser IndexedDB.
+              Open an issue on the GitHub repository. Score accuracy issues usually trace back to the
+              upstream API.
             </p>
           </div>
         </div>
@@ -494,29 +220,18 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="container footer-content">
-      <div class="footer-left">
-        <a href="#" class="brand">
-          <svg class="brand-logo" viewBox="0 0 128 128" width="24" height="24" aria-hidden="true">
-            <rect x="4" y="4" width="120" height="120" rx="32" fill="#f5c2e7"/>
-            <g transform="rotate(-8 64 66)">
-              <path fill="#fde8d7" d="M38 96h30.2c3.3 0 6.2-2 7.3-5l11.9-27.6c.5-1.1.7-2.3.7-3.5v-7.5c0-4.4-3.6-8-8-8H65.9l3.8-18.3.1-1.3c0-1.6-.7-3.1-1.7-4.2L64 15 37.6 41.4c-1.5 1.5-2.4 3.5-2.4 5.7v41c0 4.3 3.5 7.9 7.9 7.9z"/>
-              <rect x="17" y="46" width="18" height="50" rx="6" fill="#fde8d7"/>
-            </g>
-          </svg>
-          <span class="brand-name">RatioYT</span>
-        </a>
-        <p class="footer-tagline">Crafted with care by <a href="https://bittu.dev" target="_blank" rel="noopener">Bittu</a>. Free & open source under MIT.</p>
-      </div>
-
-      <div class="footer-links">
+      <p class="footer-line">
+        RatioYT v1.0.0 · Free software under
+        <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GPL-3.0</a>
+        · by <a href="https://bittu.dev" target="_blank" rel="noopener">Bittu</a>
+      </p>
+      <nav class="footer-links" aria-label="Links">
         <a href="https://github.com/Bittu5134/RatioYT" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://discord.gg/CZdNvKaNNr" target="_blank" rel="noopener">Discord</a>
-        <a href="https://www.patreon.com/cw/LazyBittu" target="_blank" rel="noopener" class="footer-donate">Donate ♡</a>
+        <a href="https://github.com/Bittu5134/RatioYT/issues" target="_blank" rel="noopener">Issues</a>
         <a href="https://returnyoutubedislike.com" target="_blank" rel="noopener">RYD API</a>
-      </div>
+      </nav>
     </div>
   </footer>
 
-  <script src="./script.js"></script>
 </body>
 </html>
