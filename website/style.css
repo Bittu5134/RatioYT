@@ -9,14 +9,14 @@
   --surface:   #0d0d0d;
   --surface-2: #1a1a1a;
 
-  /* Borders */
-  --line:        #2a2a2a;
-  --line-strong: #5c5c5c;
+  /* Borders — held close to the surface so edges read soft */
+  --line:        #2b2b2b;
+  --line-strong: #4a4a4a;
 
-  /* Text */
-  --text:  #ffffff;
-  --muted: #b3b3b3;
-  --dim:   #858585;
+  /* Text — off-white, less glare than pure white on black */
+  --text:  #ededed;
+  --muted: #b2b2b2;
+  --dim:   #8c8c8c;
 
   /* Solid accents */
   --blue:   #9cccff;
@@ -26,10 +26,10 @@
   --yellow: #ffd23f;
 
   /* Radii */
-  --r-xs: 6px;
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 20px;
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 24px;
 
   --bw: 2px;
 
@@ -55,9 +55,10 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 16.5px;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
@@ -187,16 +188,14 @@ button:focus-visible {
 }
 
 .nav-links a {
-  font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   color: var(--muted);
-  padding: 7px 11px;
-  border-radius: var(--r-xs);
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
   border: var(--bw) solid transparent;
-  transition: color 120ms ease-out, border-color 120ms ease-out;
+  transition: color 140ms ease-out, border-color 140ms ease-out;
 }
 
 .nav-links a:hover {
@@ -229,15 +228,14 @@ button:focus-visible {
 
 .eyebrow {
   display: inline-block;
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
   color: var(--green);
   border: var(--bw) solid var(--green);
   border-radius: var(--r-xs);
-  padding: 4px 11px;
+  padding: 5px 12px;
   margin-bottom: 22px;
 }
 
@@ -251,8 +249,8 @@ button:focus-visible {
 }
 
 .hero-lede {
-  font-size: 18px;
-  line-height: 1.6;
+  font-size: 19px;
+  line-height: 1.65;
   color: var(--muted);
   max-width: 62ch;
   margin-bottom: 32px;
@@ -283,7 +281,8 @@ button:focus-visible {
 }
 
 .section-desc {
-  font-size: 16px;
+  font-size: 18px;
+  line-height: 1.6;
   color: var(--muted);
   margin-top: 10px;
   max-width: 62ch;
@@ -301,8 +300,8 @@ button:focus-visible {
   background: var(--surface);
   border: var(--bw) solid var(--line);
   border-radius: var(--r-lg);
-  padding: 20px 22px;
-  transition: border-color 120ms ease-out;
+  padding: 22px 24px;
+  transition: border-color 140ms ease-out;
 }
 
 .feature-item:hover {
@@ -310,15 +309,16 @@ button:focus-visible {
 }
 
 .feature-item dt {
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--text);
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 
 .feature-item dd {
-  font-size: 14.5px;
-  line-height: 1.55;
+  font-size: 15.5px;
+  line-height: 1.6;
   color: var(--muted);
 }
 
@@ -337,20 +337,19 @@ button:focus-visible {
 }
 
 .spec-table th {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
   color: var(--blue);
   background: var(--surface-2);
-  padding: 13px 20px;
+  padding: 14px 22px;
   border-bottom: var(--bw) solid var(--line);
 }
 
 .spec-table td {
-  padding: 15px 20px;
-  font-size: 15px;
+  padding: 16px 22px;
+  font-size: 16px;
   color: var(--muted);
   border-bottom: var(--bw) solid var(--line);
   vertical-align: top;
@@ -387,15 +386,16 @@ button:focus-visible {
 }
 
 .install-platforms {
-  font-family: var(--mono);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--text);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .install-note {
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--muted);
   max-width: 46ch;
 }
@@ -419,8 +419,8 @@ button:focus-visible {
   background: var(--surface);
   border: var(--bw) solid var(--line);
   border-radius: var(--r-lg);
-  padding: 22px;
-  transition: border-color 120ms ease-out;
+  padding: 24px;
+  transition: border-color 140ms ease-out;
 }
 
 .faq-item:hover {
@@ -428,14 +428,15 @@ button:focus-visible {
 }
 
 .faq-question {
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   margin-bottom: 8px;
 }
 
 .faq-answer {
-  font-size: 14.5px;
-  line-height: 1.55;
+  font-size: 15.5px;
+  line-height: 1.6;
   color: var(--muted);
 }
 
@@ -454,7 +455,7 @@ button:focus-visible {
 }
 
 .footer-line {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--dim);
 }
 
@@ -475,13 +476,11 @@ button:focus-visible {
 }
 
 .footer-links a {
-  font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   color: var(--muted);
-  transition: color 120ms ease-out;
+  transition: color 140ms ease-out;
 }
 
 .footer-links a:hover {
