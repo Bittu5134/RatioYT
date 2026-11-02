@@ -6,6 +6,8 @@
 
 > Cross-browser extension that shows like/dislike ratio scores on YouTube video cards — on the home feed, search, shorts, playlists and more.
 
+[Website](https://ratioyt.bittu.dev) · [Discord](https://bittu.dev/discord) · [Support on Patreon](https://www.patreon.com/cw/LazyBittu)
+
 <br clear="left" />
 
 Scores come from the [Return YouTube Dislike](https://returnyoutubedislike.com) API and are cached locally in IndexedDB, so browsing stays fast and the API isn't hammered.

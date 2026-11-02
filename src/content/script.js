@@ -40,6 +40,9 @@ function injectCustomStyles() {
   const style = document.createElement("style");
   style.id = "ratioyt-styles";
   style.textContent = `
+    .ratioyt-quiet-mode .ratioyt-badge,
+    .ratioyt-quiet-mode .ratioyt-row,
+    .ratioyt-quiet-mode .ratioyt-delimiter,
     .ratioyt-hide-badges .ratioyt-badge,
     .ratioyt-hide-badges .ratioyt-row,
     .ratioyt-hide-badges .ratioyt-delimiter {
@@ -107,8 +110,8 @@ function updateRenderedCards() {
 
 function applyGlobalBadgeVisibility() {
   document.documentElement.classList.toggle(
-    "ratioyt-hide-badges",
-    userSettings.hideOnlyMode,
+    "ratioyt-quiet-mode",
+    Boolean(userSettings.hideOnlyMode)
   );
 }
 
