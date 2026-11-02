@@ -22,7 +22,7 @@
       <section class="section">
         <p class="section-label">Display</p>
 
-        <div class="row row-stacked">
+        <div class="row">
           <p class="label">Score format</p>
           <div class="select-wrap">
             <select id="scoringSystem">
@@ -38,9 +38,9 @@
         </div>
 
         <div class="row">
-          <div class="row-text">
+          <div>
             <p class="label">Colour scores</p>
-            <p class="hint">Red to green</p>
+            <p class="hint">Red to green by rating</p>
           </div>
           <label class="toggle">
             <input type="checkbox" id="scoringColour" checked>
@@ -49,9 +49,9 @@
         </div>
 
         <div class="row">
-          <div class="row-text">
+          <div>
             <p class="label">Quiet mode</p>
-            <p class="hint">No badges shown</p>
+            <p class="hint">Hide badges, filter silently</p>
           </div>
           <label class="toggle">
             <input type="checkbox" id="hideOnlyMode">
@@ -64,9 +64,9 @@
         <p class="section-label">Filtering</p>
 
         <div class="row">
-          <div class="row-text">
-            <p class="label">Hide low scores</p>
-            <p class="hint">Blur below threshold</p>
+          <div>
+            <p class="label">Hide low-rated videos</p>
+            <p class="hint">Blurred until turned off</p>
           </div>
           <label class="toggle">
             <input type="checkbox" id="hideLowScore">
