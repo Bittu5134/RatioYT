@@ -11,51 +11,28 @@ const DEFAULTS = {
 };
 let userSettings = { ...DEFAULTS };
 
-// A failed lookup is retried after this long, so a transient API error
-// doesn't leave a "--%" placeholder stuck until the next navigation.
-const RETRY_AFTER_MS = 5 * 60 * 1000;
-
-// How long cached scores stay fresh.
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-
-// After this many consecutive API failures, lookups pause for a while.
-const API_FAIL_STREAK = 5;
-const API_PAUSE_MS = 30 * 1000;
-
-// Smiley thresholds: happy above SMILEY_GOOD, neutral above SMILEY_MEH.
+const RETRY_AFTER_MS = 5 * 60 * 1000;
+const MIN_FETCH_GAP_MS = 300;
 const SMILEY_GOOD = 70;
 const SMILEY_MEH = 40;
-
-const SELECTOR_REFRESH_MS = 6 * 60 * 60 * 1000;
-
-// The card types a video badge can live in, used to find the card that
-// gets blurred when a video is hidden.
-const HOST_CARD_SELECTOR =
-  "yt-shorts-lockup-view-model, ytm-shorts-lockup-view-model, ytd-reel-item-renderer, yt-lockup-view-model, ytd-video-renderer, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, ytd-compact-video-renderer, ytd-grid-video-renderer, ytd-rich-item-renderer";
-
-const TARGET_ROW_KEYS = {
-  shorts: ["shortsMetadata"],
-  search: ["searchMetadata"],
-  playlist: ["playlistMetadata", "lockupMetadata"],
-  lockup: ["searchMetadata", "lockupMetadata", "playlistMetadata"],
-};
-
-let elementQueue = [];
-let queueIntervalId = null;
-let pendingVideos = new Set();
-let failedVideos = new Map();
-let failStreak = 0;
-let pauseUntil = 0;
-let scanTimeout = null;
-let scoreDB = {};
 
 const DB_NAME = "RatioYT";
 const DB_STORE = "scores";
 const DB_VERSION = 1;
 let dbInstance = null;
 
+// In-memory cache for synchronous instant lookups during DOM scans
+const scoreDB = new Map();
+const pendingVideos = new Set();
+const failedVideos = new Map();
+const taskQueue = [];
+let isDraining = false;
+let lastFetchTime = 0;
+let scanTimeout = null;
+
 // =========================================
-// 1. STYLES & CONFIG
+// 1. STYLES & SETTINGS
 // =========================================
 
 function injectCustomStyles() {
@@ -63,21 +40,6 @@ function injectCustomStyles() {
   const style = document.createElement("style");
   style.id = "ratioyt-styles";
   style.textContent = `
-    .ratioyt-cover-container {
-      position: relative !important;
-    }
-    .ratioyt-cover {
-      position: absolute !important;
-      inset: 0 !important;
-      z-index: 2147483647 !important;
-      border-radius: 12px !important;
-      background: rgba(0, 0, 0, 0.5) !important;
-      backdrop-filter: blur(20px) brightness(0.45) !important;
-      -webkit-backdrop-filter: blur(20px) brightness(0.45) !important;
-      cursor: default !important;
-      user-select: none !important;
-      pointer-events: auto !important;
-    }
     .ratioyt-hide-badges .ratioyt-badge,
     .ratioyt-hide-badges .ratioyt-row,
     .ratioyt-hide-badges .ratioyt-delimiter {
@@ -93,74 +55,18 @@ function injectCustomStyles() {
       display: inline-block !important;
       flex-shrink: 0 !important;
     }
+    .ratioyt-row {
+      display: block !important;
+      margin-top: 2px !important;
+    }
+    .ratioyt-badge {
+      font-size: inherit;
+    }
+    .ratioyt-delimiter {
+      opacity: 0.6;
+    }
   `;
   (document.head || document.documentElement).appendChild(style);
-}
-
-// Remote selector lists can contain invalid entries. Filter them out once,
-// at load time, so the hot paths can call querySelector/matches bare.
-function sanitizeSelectors(config) {
-  const probe = document.createElement("div");
-  const keepValid = (list) =>
-    (Array.isArray(list) ? list : [list]).filter((selector) => {
-      try {
-        probe.querySelector(selector);
-        return true;
-      } catch {
-        return false;
-      }
-    });
-
-  for (const section of ["containers", "links", "targetRows"]) {
-    if (!config[section]) continue;
-    for (const key of Object.keys(config[section])) {
-      config[section][key] = keepValid(config[section][key]);
-    }
-  }
-  return config;
-}
-
-async function initSelectors() {
-  try {
-    const data = await chrome.storage.local.get(["remoteSelectors", "selectorsLastFetched"]);
-    if (data.remoteSelectors && typeof data.remoteSelectors === "object") {
-      activeSelectors = mergeConfigs(defaultSelectors, sanitizeSelectors(data.remoteSelectors));
-    }
-
-    if (Date.now() - (data.selectorsLastFetched || 0) > SELECTOR_REFRESH_MS) {
-      fetchRemoteSelectors(activeSelectors.remoteConfigUrl);
-    }
-  } catch (err) {
-    console.warn("[RatioYT] Failed to load selectors:", err);
-  }
-}
-
-async function fetchRemoteSelectors(url) {
-  if (!url) return;
-  try {
-    const response = await fetch(url, { cache: "no-cache" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const remoteConfig = await response.json();
-
-    if (remoteConfig?.containers && remoteConfig?.targetRows) {
-      activeSelectors = mergeConfigs(defaultSelectors, sanitizeSelectors(remoteConfig));
-      chrome.storage.local.set({
-        remoteSelectors: remoteConfig,
-        selectorsLastFetched: Date.now(),
-      });
-    }
-  } catch (err) {
-    console.warn("[RatioYT] Remote selector fetch failed, using local:", err.message);
-  }
-}
-
-function mergeConfigs(base, override) {
-  if (!override) return base;
-  const merged = { ...base, ...override };
-  for (const key of ["containers", "links", "targetRows", "classes", "css"]) {
-    merged[key] = { ...base[key], ...override[key] };
-  }
-  return merged;
 }
 
 function initUserSettings() {
@@ -179,16 +85,22 @@ function initUserSettings() {
         settingsChanged = true;
       }
     }
-    if (changes.remoteSelectors?.newValue) {
-      activeSelectors = mergeConfigs(
-        defaultSelectors,
-        sanitizeSelectors(changes.remoteSelectors.newValue),
-      );
-      settingsChanged = true;
-    }
     if (settingsChanged) {
       applyGlobalBadgeVisibility();
-      updateRenderedBadges();
+      updateRenderedCards();
+      scheduleScan();
+    }
+  });
+}
+
+function updateRenderedCards() {
+  document.querySelectorAll(".ratioyt-badge").forEach((badge) => {
+    const score = parseInt(badge.dataset.ratioytValue, 10);
+    const card = badge.closest(
+      "ytd-rich-item-renderer, ytd-video-renderer, ytd-compact-video-renderer, ytd-reel-item-renderer, ytm-shorts-lockup-view-model-v2, yt-shorts-lockup-view-model, ytm-shorts-lockup-view-model, yt-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, .ytp-ce-element"
+    );
+    if (!isNaN(score) && card) {
+      applyScore(card, badge, score);
     }
   });
 }
@@ -200,190 +112,159 @@ function applyGlobalBadgeVisibility() {
   );
 }
 
-function updateRenderedBadges() {
-  document.querySelectorAll(".ratioyt-badge").forEach((badge) => {
-    const scoreValue = parseInt(badge.dataset.ratioytValue, 10);
-    if (!isNaN(scoreValue)) applyFinalScore(badge, scoreValue, null);
+// =========================================
+// 2. STORAGE (IndexedDB)
+// =========================================
+
+function openDatabase() {
+  return new Promise((resolve) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) {
+        db.createObjectStore(DB_STORE, { keyPath: "videoId" });
+      }
+    };
+    request.onsuccess = (e) => {
+      dbInstance = e.target.result;
+      loadCachedScores().then(resolve);
+    };
+    request.onerror = () => resolve();
   });
 }
 
-// =========================================
-// 2. STORAGE (IndexedDB Cache)
-// =========================================
+function loadCachedScores() {
+  return new Promise((resolve) => {
+    if (!dbInstance) return resolve();
+    const tx = dbInstance.transaction(DB_STORE, "readwrite");
+    const store = tx.objectStore(DB_STORE);
+    const getAll = store.getAll();
 
-function getStore(mode = "readonly") {
-  if (!dbInstance) return null;
-  return dbInstance.transaction(DB_STORE, mode).objectStore(DB_STORE);
-}
-
-function initializeDatabase() {
-  const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-  request.onupgradeneeded = (event) => {
-    const db = event.target.result;
-    if (!db.objectStoreNames.contains(DB_STORE)) {
-      db.createObjectStore(DB_STORE, { keyPath: "videoId" });
-    }
-  };
-
-  request.onsuccess = (event) => {
-    dbInstance = event.target.result;
-    const getAllRequest = getStore().getAll();
-
-    getAllRequest.onsuccess = () => {
+    getAll.onsuccess = () => {
       const now = Date.now();
-      const expired = [];
-      for (const entry of getAllRequest.result || []) {
+      for (const entry of getAll.result || []) {
         if (entry.expiresAt > now) {
-          scoreDB[entry.videoId] = { score: entry.score, expiresAt: entry.expiresAt };
+          scoreDB.set(entry.videoId, entry);
         } else {
-          expired.push(entry.videoId);
+          store.delete(entry.videoId);
         }
       }
-      // Purge expired entries in a single transaction.
-      if (expired.length > 0 && dbInstance) {
-        const store = dbInstance.transaction(DB_STORE, "readwrite").objectStore(DB_STORE);
-        for (const videoId of expired) {
-          delete scoreDB[videoId];
-          store.delete(videoId);
-        }
-      }
-      startObserver();
+      resolve();
     };
-
-    getAllRequest.onerror = () => startObserver();
-  };
-
-  request.onerror = (event) => {
-    console.warn("[RatioYT] IndexedDB error:", event.target.error);
-    startObserver();
-  };
+    getAll.onerror = () => resolve();
+  });
 }
 
-function saveToIndexDB(videoId, scoreValue, expiresAt) {
-  scoreDB[videoId] = { score: scoreValue, expiresAt };
-  getStore("readwrite")?.put({ videoId, score: scoreValue, expiresAt });
-}
+function saveToCache(videoId, score) {
+  const expiresAt = Date.now() + CACHE_TTL_MS;
+  const record = { videoId, score, expiresAt };
+  scoreDB.set(videoId, record);
 
-function deleteCacheRecord(videoId) {
-  delete scoreDB[videoId];
-  getStore("readwrite")?.delete(videoId);
+  if (dbInstance) {
+    try {
+      dbInstance
+        .transaction(DB_STORE, "readwrite")
+        .objectStore(DB_STORE)
+        .put(record);
+    } catch (_) {}
+  }
 }
 
 // =========================================
-// 3. SELECTOR & DOM HELPERS
+// 3. DOM HELPERS
 // =========================================
 
-function isFilterAllowedPage() {
-  const path = window.location.pathname;
-  return path === "/" || path === "/results";
-}
-
-function queryFirst(parent, selectors) {
-  if (!parent || !selectors) return null;
-  const list = Array.isArray(selectors) ? selectors : [selectors];
-  let fallback = null;
-  for (const selector of list) {
-    const el = parent.querySelector(selector);
-    if (!el) continue;
-    if (el.hasAttribute("hidden") || el.getAttribute("aria-hidden") === "true") {
-      fallback ??= el;
-    } else {
-      return el;
-    }
-  }
-  return fallback;
-}
-
-function isMatch(el, selectors) {
-  if (!el || !selectors) return false;
-  const list = Array.isArray(selectors) ? selectors : [selectors];
-  return list.some((selector) => el.matches(selector));
-}
-
-function isElementInViewport(el) {
-  const rect = el.getBoundingClientRect();
-  return rect.bottom >= 0 && rect.right >= 0 && rect.top <= innerHeight && rect.left <= innerWidth;
-}
-
-function getCardCategory(el) {
-  if (isMatch(el, activeSelectors.containers.shorts)) return "shorts";
-  if (isMatch(el, activeSelectors.containers.search)) return "search";
-  if (isMatch(el, activeSelectors.containers.playlist)) return "playlist";
-  return "lockup";
-}
-
-function getVideoId(el, category) {
-  if (category === "shorts") {
-    const href = queryFirst(el, activeSelectors.links.shorts)?.getAttribute("href") || "";
-    const shortId = href.split("/shorts/")[1];
-    return shortId ? shortId.split(/[?#]/)[0] : null;
-  }
-
-  let link = queryFirst(el, activeSelectors.links.regular);
-  if (!link) {
-    for (const parentSelector of activeSelectors.links.lockupParents) {
-      const parentHost = el.closest(parentSelector);
-      if (parentHost) {
-        link = queryFirst(parentHost, activeSelectors.links.regular);
-        if (link) break;
-      }
-    }
-  }
-
+function getVideoId(el) {
+  const link =
+    el.querySelector?.('a[href*="watch?v="], a[href*="/shorts/"]') ||
+    (el.matches?.('a[href*="watch?v="], a[href*="/shorts/"]') ? el : null);
   if (!link) return null;
-  return new URL(link.getAttribute("href") || "", location.origin).searchParams.get("v");
+  const href = link.getAttribute("href") || "";
+  const match = href.match(/(?:v=|shorts\/)([\w-]{11})/);
+  return match ? match[1] : null;
 }
 
-function getTargetRow(el, category) {
-  if (category === "lockup") {
-    const rows = el.querySelectorAll(
-      activeSelectors.targetRows.lockupMetadataRows?.join(", ") ||
-        ".ytContentMetadataViewModelMetadataRow",
-    );
-    if (rows.length >= 2) return rows[1];
-    if (rows.length === 1) return rows[0];
-  }
+function getCardContainer(card) {
+  return (
+    card.closest(
+      "ytd-rich-item-renderer, ytd-video-renderer, ytd-compact-video-renderer, ytd-reel-item-renderer, ytm-shorts-lockup-view-model-v2, yt-shorts-lockup-view-model, ytm-shorts-lockup-view-model, yt-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, .ytp-ce-element"
+    ) || card
+  );
+}
 
-  for (const key of TARGET_ROW_KEYS[category]) {
-    const row = queryFirst(el, activeSelectors.targetRows[key]);
+function getTargetRow(card) {
+  // If modern lockup, prefer the second metadata row (views & time), else the first
+  const lockupRows = card.querySelectorAll(".ytContentMetadataViewModelMetadataRow");
+  if (lockupRows.length >= 2) return lockupRows[1];
+  if (lockupRows.length === 1) return lockupRows[0];
+
+  const selectors = [
+    "#metadata-line",
+    ".ytLockupMetadataViewModelHost",
+    ".shortsLockupViewModelHostOutsideMetadataSubhead",
+    ".shortsLockupViewModelHostMetadataSubhead",
+    ".shortsLockupViewModelHostOutsideMetadata",
+    "yt-reel-metadatabar-view-model",
+    "#video-info",
+    "#metadata",
+  ];
+  for (const s of selectors) {
+    const row = card.querySelector(s);
     if (row) return row;
   }
   return null;
 }
 
-// =========================================
-// 4. UI INJECTION & STYLING
-// =========================================
-
-function createDelimiter(category) {
-  const delim = document.createElement("span");
-  const classes = activeSelectors.classes?.delimiter?.[category] || [
-    "ytContentMetadataViewModelDelimiter",
-  ];
-  delim.className = `${classes.join(" ")} ratioyt-delimiter`;
-  delim.textContent = activeSelectors.css?.delimiterText || " • ";
-  return delim;
+function isElementInViewport(el) {
+  const rect = el.getBoundingClientRect();
+  return (
+    rect.bottom >= 0 &&
+    rect.right >= 0 &&
+    rect.top <= innerHeight &&
+    rect.left <= innerWidth
+  );
 }
 
-function createBadge(category) {
-  const badge = document.createElement("span");
-  const classes = activeSelectors.classes?.score?.[category] || [
-    "ytAttributedStringHost",
-    "ytContentMetadataViewModelMetadataText",
-  ];
-  badge.className = `${classes.join(" ")} ratioyt-badge`;
-  if (activeSelectors.css?.scoreStyle) badge.style.cssText = activeSelectors.css.scoreStyle;
-  return badge;
+// =========================================
+// 4. BADGE RENDERING & CARD REMOVAL
+// =========================================
+
+const STAR_PATH =
+  "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z";
+const STAR_SVG = {
+  full: `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="${STAR_PATH}"/></svg>`,
+  half: `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12"><path d="${STAR_PATH}" fill="currentColor" opacity="0.25"/><path d="M12 2v15.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>`,
+  empty: `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" opacity="0.25"><path d="${STAR_PATH}"/></svg>`,
+};
+
+function renderStarSvgs(score) {
+  const rating = Math.max(0, Math.min(5, Math.round((score / 100) * 10) / 2));
+  const full = Math.floor(rating);
+  const hasHalf = rating % 1 !== 0;
+
+  let html = `<span class="ratioyt-stars-wrap" title="${rating} / 5 stars (${score}%)">`;
+  html += STAR_SVG.full.repeat(full);
+  if (hasHalf) html += STAR_SVG.half;
+  html += STAR_SVG.empty.repeat(5 - full - (hasHalf ? 1 : 0));
+  html += `</span>`;
+  return html;
 }
 
-// YouTube's metadata rows are nowrap + ellipsis, so an inline badge that
-// doesn't fit would truncate the row's own text. When it overflows, drop
-// the badge onto its own line under the row instead.
+function formatScoreText(score, format) {
+  switch (format) {
+    case "decimal":
+      return `${Math.round(score / 10)}/10`;
+    case "smiley":
+      return score >= SMILEY_GOOD ? "😊" : score >= SMILEY_MEH ? "😐" : "😞";
+    case "percentage":
+    default:
+      return `${score}%`;
+  }
+}
+
 function ensureBadgeFits(badge) {
   const row = badge.parentElement;
-  if (!row || row.classList.contains("ratioyt-row")) return; // already on its own line
-  if (row.clientWidth === 0) return;
+  if (!row || row.classList.contains("ratioyt-row") || row.clientWidth === 0) return;
 
   const rowRect = row.getBoundingClientRect();
   const badgeRect = badge.getBoundingClientRect();
@@ -391,9 +272,8 @@ function ensureBadgeFits(badge) {
     row.scrollWidth > row.clientWidth + 1 ||
     (rowRect.right > 0 && badgeRect.right > rowRect.right + 1);
 
-  if (!isOverflowing) return; // fits inline nicely!
+  if (!isOverflowing) return;
 
-  // Doesn't fit: move to its own line below the metadata row
   row.querySelector(".ratioyt-delimiter")?.remove();
   let ownRow = row.parentElement?.querySelector(".ratioyt-row");
   if (!ownRow) {
@@ -404,255 +284,176 @@ function ensureBadgeFits(badge) {
   ownRow.appendChild(badge);
 }
 
-function injectPlaceholder(targetRow, category) {
-  // An existing badge sits either inline in the row or on its own line below.
+function injectBadge(targetRow) {
   let badge =
     targetRow.querySelector(".ratioyt-badge") ||
-    targetRow.parentElement.querySelector(".ratioyt-row .ratioyt-badge");
+    targetRow.parentElement?.querySelector(".ratioyt-row .ratioyt-badge");
 
   if (!badge) {
-    badge = createBadge(category);
-    if (!targetRow.querySelector(".ratioyt-delimiter")) {
-      targetRow.appendChild(createDelimiter(category));
-    }
+    badge = document.createElement("span");
+    badge.className = "ratioyt-badge";
+    const delimiter = document.createElement("span");
+    delimiter.className = "ratioyt-delimiter";
+    delimiter.textContent = " • ";
+    targetRow.appendChild(delimiter);
     targetRow.appendChild(badge);
   }
 
-  badge.style.color = activeSelectors.css?.placeholderColor || "#888888";
-  badge.textContent = activeSelectors.css?.placeholderText || "--%";
+  badge.style.color = "#888888";
+  badge.textContent = "--%";
   ensureBadgeFits(badge);
   return badge;
 }
 
-const STAR_PATH = "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z";
-const STAR_SVG = {
-  full: `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="${STAR_PATH}"/></svg>`,
-  half: `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12"><path d="${STAR_PATH}" fill="currentColor" opacity="0.25"/><path d="M12 2v15.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>`,
-  empty: `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" opacity="0.25"><path d="${STAR_PATH}"/></svg>`,
-};
-
-function renderStarSvgs(scoreValue) {
-  const rating = Math.max(0, Math.min(5, Math.round((scoreValue / 100) * 10) / 2));
-  const fullStars = Math.floor(rating);
-  const hasHalf = rating % 1 !== 0;
-
-  let html = `<span class="ratioyt-stars-wrap" title="${rating} / 5 stars (${scoreValue}%)">`;
-  html += STAR_SVG.full.repeat(fullStars);
-  if (hasHalf) html += STAR_SVG.half;
-  html += STAR_SVG.empty.repeat(5 - fullStars - (hasHalf ? 1 : 0));
-  html += `</span>`;
-  return html;
+function hideCard(card) {
+  const container = getCardContainer(card);
+  container.querySelectorAll("video").forEach((v) => {
+    try {
+      v.pause();
+      v.src = "";
+    } catch (_) {}
+  });
+  container.remove();
 }
 
-function formatScoreText(scoreValue, format) {
-  switch (format) {
-    case "decimal":
-      return `${Math.round(scoreValue / 10)}/10`;
-    case "smiley":
-      return scoreValue >= SMILEY_GOOD ? "😊" : scoreValue >= SMILEY_MEH ? "😐" : "😞";
-    case "percentage":
-    default:
-      return `${scoreValue}%`;
+function applyScore(card, badge, score) {
+  // If video is below minimum score threshold, completely delete the card from the DOM tree
+  if (userSettings.hideLowScore && score >= 0 && score < userSettings.lowScoreThreshold) {
+    hideCard(card);
+    return;
   }
-}
 
-function applyFinalScore(badge, scoreValue, cardElement) {
-  badge.dataset.ratioytValue = String(scoreValue);
-  const hostCard = (badge || cardElement).closest(HOST_CARD_SELECTOR);
+  badge.dataset.ratioytValue = String(score);
 
-  // Deleted/unknown videos get a neutral "N/A" and are never hidden.
-  if (scoreValue < 0) {
+  if (score < 0) {
     badge.textContent = "N/A";
     badge.style.color = "";
-    if (hostCard) clearHideEffect(hostCard);
     return;
   }
 
   if (userSettings.scoringSystem === "stars") {
-    badge.innerHTML = renderStarSvgs(scoreValue);
+    badge.innerHTML = renderStarSvgs(score);
   } else {
-    badge.textContent = formatScoreText(scoreValue, userSettings.scoringSystem);
+    badge.textContent = formatScoreText(score, userSettings.scoringSystem);
   }
 
-  badge.style.color = userSettings.scoringColour ? `hsl(${scoreValue * 1.2}, 100%, 45%)` : "";
-  ensureBadgeFits(badge); // the real content can be wider than the placeholder
-  if (hostCard) applyHideEffect(hostCard, scoreValue);
-}
-
-function clearHideEffect(hostCard) {
-  const target =
-    hostCard.querySelector(
-      "#content, .ytLockupViewModelHost, .shortsLockupViewModelHost, .ytShortsLockupViewModelHost, [class*='ThumbnailContainer'], [class*='thumbnail-container'], ytd-thumbnail, #dismissible",
-    ) || hostCard;
-  target.classList.remove("ratioyt-cover-container");
-  target.querySelectorAll(".ratioyt-cover").forEach((el) => el.remove());
-  hostCard.classList.remove("ratioyt-cover-container");
-  hostCard.querySelectorAll(".ratioyt-cover").forEach((el) => el.remove());
-}
-
-function applyHideEffect(hostCard, scoreValue) {
-  const shouldHide =
-    isFilterAllowedPage() &&
-    userSettings.hideLowScore &&
-    scoreValue < userSettings.lowScoreThreshold;
-
-  if (!shouldHide) {
-    clearHideEffect(hostCard);
-    return;
-  }
-
-  // A single overlay with the maximum z-index covers the thumbnail. It
-  // swallows pointer events, so YouTube never sees the hover and the preview
-  // never autoplays, and clicks do nothing. There is deliberately no way to
-  // peek: the only way to watch a hidden video is to turn the setting off.
-  const target =
-    hostCard.querySelector(
-      "#content, .ytLockupViewModelHost, .shortsLockupViewModelHost, .ytShortsLockupViewModelHost, [class*='ThumbnailContainer'], [class*='thumbnail-container'], ytd-thumbnail, #dismissible",
-    ) || hostCard;
-
-  target.classList.add("ratioyt-cover-container");
-
-  if (target.querySelector(":scope > .ratioyt-cover")) return;
-
-  const cover = document.createElement("div");
-  cover.className = "ratioyt-cover";
-  target.appendChild(cover);
+  badge.style.color = userSettings.scoringColour
+    ? `hsl(${score * 1.2}, 100%, 45%)`
+    : "";
+  ensureBadgeFits(badge);
 }
 
 // =========================================
 // 5. QUEUE & NETWORK
 // =========================================
 
-async function processQueue() {
-  if (Date.now() < pauseUntil) return;
-
-  while (elementQueue.length > 0) {
-    const task = elementQueue.shift();
-    pendingVideos.delete(task.videoId);
-
-    if (!task.placeholderElement || !document.body.contains(task.placeholderElement)) continue;
-    await fetchScore(task);
-    return; // one lookup per interval tick
-  }
-
-  if (queueIntervalId) {
-    clearInterval(queueIntervalId);
-    queueIntervalId = null;
-  }
-}
-
-// async function fetchScore({ videoId, placeholderElement, cardElement }) {
-//   try {
-//     const response = await fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${videoId}`);
-//     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-//     const votes = await response.json();
-
-//     let score;
-//     if (votes.deleted || (votes.likes === undefined && votes.dislikes === undefined)) {
-//       score = -1; 
-//     } else {
-//       const total = (votes.likes ?? 0) + (votes.dislikes ?? 0);
-//       score = total > 0 ? Math.round((votes.likes / total) * 100) : 0;
-//     }
-
-//     saveToIndexDB(videoId, score, Date.now() + CACHE_TTL_MS);
-//     applyFinalScore(placeholderElement, score, cardElement);
-
-//     failStreak = 0;
-//     failedVideos.delete(videoId);
-//   } catch (err) {
-//     console.warn("[RatioYT] Failed score for", videoId, err.message);
-//     failedVideos.set(videoId, Date.now());
-//     placeholderElement.textContent = "--%";
-
-//     failStreak += 1;
-//     if (failStreak >= API_FAIL_STREAK) {
-//       failStreak = 0;
-//       pauseUntil = Date.now() + API_PAUSE_MS;
-//       console.warn(
-//         `[RatioYT] Pausing lookups for ${API_PAUSE_MS / 1000}s after ${API_FAIL_STREAK} consecutive failures`,
-//       );
-//     }
-//   }
+// Real Return YouTube Dislike API fetch (kept for future activation):
+// async function fetchScore({ videoId }) {
+//   const response = await fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${videoId}`);
+//   if (!response.ok) throw new Error(`HTTP ${response.status}`);
+//   const votes = await response.json();
+//   if (votes.deleted || (votes.likes === undefined && votes.dislikes === undefined)) return -1;
+//   const total = (votes.likes ?? 0) + (votes.dislikes ?? 0);
+//   return total > 0 ? Math.round((votes.likes / total) * 100) : 0;
 // }
 
+async function fetchScore({ videoId }) {
+  return Math.floor(Math.random() * 101);
+}
 
-async function fetchScore({ videoId, placeholderElement, cardElement }) {
+async function drainQueue() {
+  if (isDraining) return;
+  isDraining = true;
+
   try {
-    const score = Math.floor(Math.random() * 101);
+    while (taskQueue.length > 0) {
+      const task = taskQueue.shift();
+      pendingVideos.delete(task.videoId);
 
-    saveToIndexDB(videoId, score, Date.now() + CACHE_TTL_MS);
-    applyFinalScore(placeholderElement, score, cardElement);
+      if (!task.card || !document.body.contains(task.card)) continue;
 
-    failStreak = 0;
-    failedVideos.delete(videoId);
-  } catch (err) {
-    console.warn("[RatioYT] Failed score for", videoId, err.message);
-    failedVideos.set(videoId, Date.now());
-    placeholderElement.textContent = "--%";
+      const cached = scoreDB.get(task.videoId);
+      if (cached && cached.expiresAt > Date.now()) {
+        applyScore(task.card, task.badge, cached.score);
+        continue;
+      }
 
-    failStreak += 1;
-    if (failStreak >= API_FAIL_STREAK) {
-      failStreak = 0;
-      pauseUntil = Date.now() + API_PAUSE_MS;
-      console.warn(
-        `[RatioYT] Pausing lookups for ${API_PAUSE_MS / 1000}s after ${API_FAIL_STREAK} consecutive failures`,
-      );
+      const elapsed = Date.now() - lastFetchTime;
+      if (elapsed < MIN_FETCH_GAP_MS) {
+        await new Promise((r) => setTimeout(r, MIN_FETCH_GAP_MS - elapsed));
+      }
+
+      lastFetchTime = Date.now();
+      try {
+        const score = await fetchScore(task);
+        saveToCache(task.videoId, score);
+        failedVideos.delete(task.videoId);
+        if (document.body.contains(task.card)) {
+          applyScore(task.card, task.badge, score);
+        }
+      } catch (err) {
+        console.warn("[RatioYT] Failed score lookup:", task.videoId, err.message);
+        failedVideos.set(task.videoId, Date.now());
+        task.badge.textContent = "--%";
+      }
     }
+  } finally {
+    isDraining = false;
   }
 }
 
+function enqueueTask(task) {
+  if (pendingVideos.has(task.videoId)) return;
+  pendingVideos.add(task.videoId);
+
+  if (isElementInViewport(task.card)) {
+    taskQueue.unshift(task);
+  } else {
+    taskQueue.push(task);
+  }
+  drainQueue();
+}
+
 // =========================================
-// 6. OBSERVER & LIFECYCLE
+// 6. CARD SCANNING & OBSERVER
 // =========================================
 
-function scanAndProcessCards() {
-  const selectorList = activeSelectors.containers?.observe || [];
-  if (selectorList.length === 0) return;
+function scanCards() {
+  const cardSelectors = activeSelectors.containers?.observe || [];
+  if (cardSelectors.length === 0) return;
 
-  document.querySelectorAll(selectorList.join(", ")).forEach((el) => {
-    const category = getCardCategory(el);
-    const videoId = getVideoId(el, category);
+  document.querySelectorAll(cardSelectors.join(", ")).forEach((card) => {
+    const videoId = getVideoId(card);
     if (!videoId) return;
 
-    const targetRow = getTargetRow(el, category);
-    if (!targetRow) return;
-
-    const existingBadge = el.querySelector(".ratioyt-badge");
-    if (el.dataset.ratioytVideoId === videoId && existingBadge) {
-      // Scored, in flight, or recently failed - nothing to do yet.
+    // Check if card has already been scored or is currently pending
+    const existingBadge = card.querySelector(".ratioyt-badge");
+    if (card.dataset.ratioytVideoId === videoId && existingBadge) {
       if (existingBadge.dataset.ratioytValue) return;
       if (pendingVideos.has(videoId)) return;
       if (Date.now() - (failedVideos.get(videoId) || 0) < RETRY_AFTER_MS) return;
     }
 
-    el.dataset.ratioytVideoId = videoId;
-    const badge = injectPlaceholder(targetRow, category);
-    const cachedRecord = scoreDB[videoId];
+    const targetRow = getTargetRow(card);
+    if (!targetRow) return;
 
-    if (cachedRecord !== undefined && cachedRecord.expiresAt > Date.now()) {
-      applyFinalScore(badge, cachedRecord.score, el);
+    card.dataset.ratioytVideoId = videoId;
+    const badge = injectBadge(targetRow);
+    const cached = scoreDB.get(videoId);
+
+    if (cached && cached.expiresAt > Date.now()) {
+      applyScore(card, badge, cached.score);
     } else {
-      if (cachedRecord !== undefined) deleteCacheRecord(videoId);
-      if (!pendingVideos.has(videoId)) {
-        pendingVideos.add(videoId);
-        const task = { videoId, placeholderElement: badge, cardElement: el };
-        if (isElementInViewport(badge)) elementQueue.unshift(task);
-        else elementQueue.push(task);
-      }
+      enqueueTask({ videoId, card, badge });
     }
   });
-
-  if (elementQueue.length > 0 && !queueIntervalId) {
-    queueIntervalId = setInterval(processQueue, 500);
-  }
 }
 
 function scheduleScan() {
   if (scanTimeout) clearTimeout(scanTimeout);
   scanTimeout = setTimeout(() => {
     scanTimeout = null;
-    scanAndProcessCards();
+    scanCards();
   }, 60);
 }
 
@@ -660,20 +461,16 @@ const observer = new MutationObserver(() => scheduleScan());
 
 function startObserver() {
   injectCustomStyles();
-  scanAndProcessCards();
+  scanCards();
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
 window.addEventListener("yt-navigate-start", () => {
-  elementQueue = [];
+  taskQueue.length = 0;
   pendingVideos.clear();
-  if (queueIntervalId) {
-    clearInterval(queueIntervalId);
-    queueIntervalId = null;
-  }
 });
 
 window.addEventListener("yt-navigate-finish", () => scheduleScan());
 
 initUserSettings();
-initSelectors().then(() => initializeDatabase());
+openDatabase().then(() => startObserver());
