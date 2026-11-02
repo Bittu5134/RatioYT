@@ -1,21 +1,39 @@
 <a href="https://extension.js.org" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Powered%20by%20%7C%20Extension.js-0971fe" alt="Powered by Extension.js" align="right" /></a>
 
+<img src="./src/images/logo.png" alt="RatioYT" width="88" height="88" align="left" hspace="16" vspace="4" />
+
 # RatioYT
 
 > Cross-browser extension that shows like/dislike ratio scores on YouTube video cards — on the home feed, search, shorts, playlists and more.
 
+<br clear="left" />
+
 Scores come from the [Return YouTube Dislike](https://returnyoutubedislike.com) API and are cached locally in IndexedDB, so browsing stays fast and the API isn't hammered.
 
-![screenshot](./public/screenshot.png)
+![screenshot](./assets/screenshot.png)
 
 ## Features
 
 - Score badges on video cards: percentage, 10-point ratio, smiley faces, or 5-star SVGs with half stars
 - Optional dynamic score colouring (red → green)
 - Quiet mode: filter the feed without showing badges
-- Hide low-rated videos (home & search) behind a soft blur — hovering reveals them
+- Hide low-rated videos (home & search) behind a soft blur — click to reveal
 - Adjustable minimum-score threshold
 - Remote-updateable selector config, so YouTube UI changes don't need an extension update
+
+## Project layout
+
+```
+src/
+├─ manifest.json
+├─ config/selectors.json    single source of truth; also fetched as the remote config
+├─ content/script.js        content script (badges, cache, filtering)
+├─ popup/                   settings popup (html, js, css)
+└─ images/                  logo.png + generated icons
+website/                    static informational site
+assets/                     screenshot used by this README
+scripts/                    local dev helpers
+```
 
 ## Commands
 
@@ -51,8 +69,10 @@ npm run preview
 
 [Extension.js docs](https://extension.js.org).
 
+## License
 
-
+RatioYT is free software, released under the **GNU General Public License v3.0 or later**
+(GPL-3.0-or-later). See [LICENSE](./LICENSE) for the full text.
 
 ##### DEVLOGS
 
@@ -127,7 +147,7 @@ then the score is first looked up in the local database and if not found its loo
 
 The UI script pulls data from the database once on every page load and it does not bother checking if the cache is expired, that's handled by the storage background script that runs every 15 minutes and cleans the storage of old cache
 
-I have created a robust system of caching with 3 different tiers, I plan on adding a cache sharing system between users where these tiers will come in handy
+I have created a robust system of caching with 3 different tiers.
 
 Oh and Kind of random but this little function that coverts score into a HSL colour code in a range between red and green is probably my favorite thing I did today, there were other things I did today that were more difficult to achieve for me, but this was more fun than anyone of them.
 
@@ -146,40 +166,6 @@ The IndexDB i'm using to save data is stored per origin, meaning the indexDB use
 
 This has forced me to fundamentally change my approach and I'll be shifting all the code to the content scripts.
 
----
-
-Devlog #5: New Sub-Project Idea
-
-I had planned to use WEB-RTC + PeerJS to connect users of the client to share their cache with each other.
-But I ran into several issues along the line.
-
-My Biggest Issues Were
-
-- need of a TURN/STUN server for WebRTC connection
-- NAT Issues
-- Dicovery Problem
-
-Now I'll elaborate on each one of them one by one
-
-### Issue of the STUN server
-
-whenever you connect through WEB-RTC your public IP address is needed, for that we use a STUN server to fetch that imfo, Luckily Google provides a free public stun server which I would be using
-
-### NAT Issues
-
-Around 10-20 % of my users might be behind heaveliy restricted company or commercial NAT, which simply means that they dont have thier own static IPs but some random internal routing is done by the isp, there are workarounds for it but at my level they are pointless
-
-### Discovery problem
-
-Even if I use Peer.js's default signalling server I will have to know the exact id of the other user. which is not exactly possible with a backend.
-
-At first I just thought of self-hosting a backend myself, cuase it had a feature to get all peers ready to connect. But its problem was that it just dumped all the peers at once, plus it would put too much pressure on the server
-
-### My Solution
-
-Create a lobby server, where users can post and get others ids without having to explicitally trying to hardcode an id. what it will do is just collect users who ping the server with their ids and then display those ids
-
-no need for elaborate setup process for my future projects too, and I plan to turn it into a fulll fledged website, package and server
 ## Popup settings
 
 Score format · Score colour · Quiet mode · Hide low-rated videos · Minimum score
