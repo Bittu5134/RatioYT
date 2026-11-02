@@ -596,19 +596,45 @@ async function processQueue() {
   }
 }
 
+// async function fetchScore({ videoId, placeholderElement, cardElement }) {
+//   try {
+//     const response = await fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${videoId}`);
+//     if (!response.ok) throw new Error(`HTTP ${response.status}`);
+//     const votes = await response.json();
+
+//     let score;
+//     if (votes.deleted || (votes.likes === undefined && votes.dislikes === undefined)) {
+//       score = -1; 
+//     } else {
+//       const total = (votes.likes ?? 0) + (votes.dislikes ?? 0);
+//       score = total > 0 ? Math.round((votes.likes / total) * 100) : 0;
+//     }
+
+//     saveToIndexDB(videoId, score, Date.now() + CACHE_TTL_MS);
+//     applyFinalScore(placeholderElement, score, cardElement);
+
+//     failStreak = 0;
+//     failedVideos.delete(videoId);
+//   } catch (err) {
+//     console.warn("[RatioYT] Failed score for", videoId, err.message);
+//     failedVideos.set(videoId, Date.now());
+//     placeholderElement.textContent = "--%";
+
+//     failStreak += 1;
+//     if (failStreak >= API_FAIL_STREAK) {
+//       failStreak = 0;
+//       pauseUntil = Date.now() + API_PAUSE_MS;
+//       console.warn(
+//         `[RatioYT] Pausing lookups for ${API_PAUSE_MS / 1000}s after ${API_FAIL_STREAK} consecutive failures`,
+//       );
+//     }
+//   }
+// }
+
+
 async function fetchScore({ videoId, placeholderElement, cardElement }) {
   try {
-    const response = await fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${videoId}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const votes = await response.json();
-
-    let score;
-    if (votes.deleted || (votes.likes === undefined && votes.dislikes === undefined)) {
-      score = -1; // deleted/unknown: cached so it isn't refetched every navigation
-    } else {
-      const total = (votes.likes ?? 0) + (votes.dislikes ?? 0);
-      score = total > 0 ? Math.round((votes.likes / total) * 100) : 0;
-    }
+    const score = Math.floor(Math.random() * 101);
 
     saveToIndexDB(videoId, score, Date.now() + CACHE_TTL_MS);
     applyFinalScore(placeholderElement, score, cardElement);
