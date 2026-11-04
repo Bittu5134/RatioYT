@@ -417,6 +417,19 @@ async function drainQueue() {
 
   try {
     while (taskQueue.length > 0) {
+      // Pause worker if tab is hidden in the background
+      if (document.hidden) {
+        await new Promise((resolve) => {
+          const onVisible = () => {
+            if (!document.hidden) {
+              document.removeEventListener("visibilitychange", onVisible);
+              resolve();
+            }
+          };
+          document.addEventListener("visibilitychange", onVisible);
+        });
+      }
+
       const task = taskQueue.shift();
       pendingVideos.delete(task.videoId);
 
@@ -455,14 +468,26 @@ async function drainQueue() {
 function enqueueTask(task) {
   if (pendingVideos.has(task.videoId)) return;
   pendingVideos.add(task.videoId);
-
-  if (isElementInViewport(task.card)) {
-    taskQueue.unshift(task);
-  } else {
-    taskQueue.push(task);
-  }
+  taskQueue.push(task);
   drainQueue();
 }
+
+// Prefetch observer: only queues network lookups when cards enter or near the viewport
+const viewportObserver = new IntersectionObserver(
+  (entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      viewportObserver.unobserve(entry.target);
+      const card = entry.target;
+      const videoId = card.dataset.ratioytVideoId;
+      const badge = card.querySelector(".ratioyt-badge");
+      if (videoId && badge && !badge.dataset.ratioytValue) {
+        enqueueTask({ videoId, card, badge });
+      }
+    }
+  },
+  { rootMargin: "350px 0px" }
+);
 
 // =========================================
 // 6. CARD SCANNING & OBSERVER
@@ -493,8 +518,10 @@ function scanCards() {
 
     if (cached && cached.expiresAt > Date.now()) {
       applyScore(card, badge, cached.score);
-    } else {
+    } else if (isElementInViewport(card)) {
       enqueueTask({ videoId, card, badge });
+    } else {
+      viewportObserver.observe(card);
     }
   });
 }
@@ -504,10 +531,15 @@ function scheduleScan() {
   scanTimeout = setTimeout(() => {
     scanTimeout = null;
     scanCards();
-  }, 60);
+  }, 200);
 }
 
-const observer = new MutationObserver(() => scheduleScan());
+const observer = new MutationObserver((mutations) => {
+  const hasAddedElements = mutations.some((m) =>
+    Array.from(m.addedNodes).some((n) => n.nodeType === 1)
+  );
+  if (hasAddedElements) scheduleScan();
+});
 
 function startObserver() {
   injectCustomStyles();
@@ -518,6 +550,7 @@ function startObserver() {
 window.addEventListener("yt-navigate-start", () => {
   taskQueue.length = 0;
   pendingVideos.clear();
+  viewportObserver.disconnect();
 });
 
 window.addEventListener("yt-navigate-finish", () => scheduleScan());

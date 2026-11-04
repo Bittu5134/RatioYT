@@ -182,9 +182,6 @@ h3 {
 .browser-badge {
   width: 7em;
   height: 7em;
-  /* background: #ffffff; */
-  /* border-radius: var(--radius-lg); */
-  /* border: 2px solid transparent; */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -193,11 +190,6 @@ h3 {
   text-decoration: none;
   cursor: pointer;
   transition: transform 0.15s ease-out;
-  /* box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45); */
-  /* transition: */
-    /* transform 160ms cubic-bezier(.34, 1.56, .64, 1), */
-    /* border-color 140ms ease-out, */
-    /* box-shadow 160ms ease-out; */
 }
 
 .browser-badge img {
@@ -209,14 +201,7 @@ h3 {
 
 .browser-badge:hover {
   transform: scale(1.2);
-  /* transform: translateY(-4px) scale(1.06);
-  border-color: var(--active);
-  box-shadow: 0 8px 24px rgba(255, 210, 63, 0.25); */
 }
-
-/* .browser-badge:active {
-  transform: scale(0.96);
-} */
 
 .install-note {
   font-size: 0.95rem;
