@@ -34,7 +34,6 @@ src/
 └─ images/                  logo.png + generated icons
 website/                    static informational site
 assets/                     screenshot used by this README
-scripts/                    local dev helpers
 ```
 
 ## Commands

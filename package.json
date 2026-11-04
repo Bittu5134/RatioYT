@@ -27,9 +27,7 @@
     "preview": "extension preview --browser=chrome",
     "build": "extension build --browser chrome",
     "build:firefox": "extension build --browser firefox",
-    "build:edge": "extension build --browser edge",
-    "dev:firefox": "bash scripts/firefox-mcp.sh",
-    "firefox:mcp": "bash scripts/firefox-mcp.sh"
+    "build:edge": "extension build --browser edge"
   },
   "engines": {
     "node": ">=18.0.0"
