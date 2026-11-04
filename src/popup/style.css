@@ -237,13 +237,10 @@ select:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
 /* ── Threshold panel ── */
 
 .nested {
-  background: var(--bg);
-  border: var(--bw) dashed var(--line-strong);
-  border-radius: var(--r-md);
-  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding-top: 4px;
 }
 
 .threshold-row {

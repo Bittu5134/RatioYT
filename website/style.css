@@ -64,7 +64,7 @@ a:hover {
 
 #wrapper {
   width: 100%;
-  max-width: 860px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 30px 20px 60px;
 }
@@ -180,23 +180,24 @@ h3 {
 }
 
 .browser-badge {
-  width: 68px;
-  height: 68px;
-  background: #ffffff;
-  border-radius: var(--radius-lg);
-  border: 2px solid transparent;
+  width: 7em;
+  height: 7em;
+  /* background: #ffffff; */
+  /* border-radius: var(--radius-lg); */
+  /* border: 2px solid transparent; */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 13px;
+  padding: 1em;
   box-sizing: border-box;
   text-decoration: none;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-  transition:
-    transform 160ms cubic-bezier(.34, 1.56, .64, 1),
-    border-color 140ms ease-out,
-    box-shadow 160ms ease-out;
+  transition: transform 0.15s ease-out;
+  /* box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45); */
+  /* transition: */
+    /* transform 160ms cubic-bezier(.34, 1.56, .64, 1), */
+    /* border-color 140ms ease-out, */
+    /* box-shadow 160ms ease-out; */
 }
 
 .browser-badge img {
@@ -207,14 +208,15 @@ h3 {
 }
 
 .browser-badge:hover {
-  transform: translateY(-4px) scale(1.06);
+  transform: scale(1.2);
+  /* transform: translateY(-4px) scale(1.06);
   border-color: var(--active);
-  box-shadow: 0 8px 24px rgba(255, 210, 63, 0.25);
+  box-shadow: 0 8px 24px rgba(255, 210, 63, 0.25); */
 }
 
-.browser-badge:active {
+/* .browser-badge:active {
   transform: scale(0.96);
-}
+} */
 
 .install-note {
   font-size: 0.95rem;
@@ -229,17 +231,27 @@ h3 {
 
 /* ── Connect links ── */
 
+.connect-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
 .connect-links {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
-  gap: 6px 10px;
-  padding: 12px 16px;
+  text-align: center;
+  gap: 8px 16px;
+  padding: 12px 20px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
+  margin: 0 auto;
+  max-width: fit-content;
 }
 
 .connect-item {
@@ -257,6 +269,40 @@ h3 {
 }
 
 /* ── Feature / Info List (ul.clear li LibRedirect pattern) ── */
+
+.features-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.features-layout ul.clear {
+  flex: 1;
+  min-width: 0;
+}
+
+.popup-preview {
+  flex-shrink: 0;
+  width: 320px;
+  position: sticky;
+  top: 24px;
+}
+
+.popup-frame-wrapper {
+  width: 320px;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border);
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+  background: #000000;
+}
+
+.popup-preview iframe {
+  width: 320px;
+  height: 560px;
+  border: none;
+  display: block;
+}
 
 ul.clear {
   list-style: none;
@@ -330,6 +376,12 @@ ul.clear .arrow {
 
 /* ── Responsive ── */
 
+@media (max-width: 860px) {
+  .popup-preview {
+    display: none !important;
+  }
+}
+
 @media (max-width: 720px) {
   #logo h1 {
     font-size: 2rem;
@@ -352,7 +404,8 @@ ul.clear .arrow {
 
   .connect-links {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
     gap: 8px;
   }
 

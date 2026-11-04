@@ -27,12 +27,12 @@
       <nav class="nav_bar" aria-label="Main navigation">
         <a href="./index.html" class="active">Home</a>
         <a href="#install">Install</a>
-        <a href="#features">Features & How It Works</a>
+        <a href="#features">Features</a>
         <a href="https://www.patreon.com/cw/LazyBittu" target="_blank" rel="noopener" class="donate_nav">Support ❤️</a>
       </nav>
 
       <h2 class="title">
-        A lightweight browser extension that brings like/dislike ratios back to YouTube video cards and filters
+        A lightweight browser extension that rates YouTube videos and filters
         low-rated videos.
       </h2>
     </header>
@@ -60,22 +60,21 @@
           aria-label="Brave (Chrome Web Store)" title="Brave">
           <img src="./images/brave.svg" width="40" height="40" alt="Brave">
         </a>
-        <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener" class="browser-badge"
+        <!-- <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener" class="browser-badge"
           aria-label="GitHub Releases" title="GitHub Releases">
           <img src="./images/github.svg" width="40" height="40" alt="GitHub">
-        </a>
+        </a> -->
       </div>
 
       <p class="install-note">
-        <strong>Note:</strong> RatioYT is available across all major Chromium and Gecko browsers. Source builds are
+        <strong>Pick your browser</strong>. Source builds are
         available on <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener">GitHub
           Releases</a>.
       </p>
     </section>
 
     <!-- Connect / Contact Links -->
-    <section class="section-block">
-      <h3>Connect with us</h3>
+    <section class="section-block connect-section">
       <div class="connect-links">
         <span class="connect-item">
           <strong>Discord:</strong>
@@ -99,54 +98,58 @@
       </div>
     </section>
 
-    <!-- Features & How It Works -->
+    <!-- Features & How It Works + Live Popup Preview -->
     <section id="features" class="section-block">
       <h3>Features & How It Works</h3>
-      <ul class="clear">
-        <li>
-          <strong>Score Badges</strong> <span class="arrow">&#8594;</span>
-          Displays authentic like/dislike ratios on video cards across Home, Search, Shorts, and watch suggestions.
-        </li>
-        <li>
-          <strong>Score Source</strong> <span class="arrow">&#8594;</span>
-          Scores come from the public <a href="https://returnyoutubedislike.com" target="_blank" rel="noopener">Return YouTube Dislike</a> API database.
-        </li>
-        <li>
-          <strong>Four Display Formats</strong> <span class="arrow">&#8594;</span>
-          Choose between Percentage (96%), 10-point decimal (9.6/10), Smiley emojis (😊 😐 😞), or 5-star SVGs with half stars.
-        </li>
-        <li>
-          <strong>Dynamic Colours</strong> <span class="arrow">&#8594;</span>
-          Optional red-to-green score colouring so high-quality content and clickbait are obvious at a glance.
-        </li>
-        <li>
-          <strong>Filtered Placeholders</strong> <span class="arrow">&#8594;</span>
-          Videos below your custom score threshold are replaced in-place with dark placeholders, stopping video previews and audio.
-        </li>
-        <li>
-          <strong>Quiet Mode</strong> <span class="arrow">&#8594;</span>
-          Hides all score badges for a clean feed while continuing to filter low-rated videos quietly in the background.
-        </li>
-        <li>
-          <strong>On-Device Cache</strong> <span class="arrow">&#8594;</span>
-          Lookups are cached on your machine in IndexedDB for 7 days; repeat views take zero network requests and render instantly.
-        </li>
-        <li>
-          <strong>Remote Selectors</strong> <span class="arrow">&#8594;</span>
-          YouTube UI layout updates are handled automatically via remote selector syncing without waiting for a store release.
-        </li>
-        <li>
-          <strong>Zero Telemetry</strong> <span class="arrow">&#8594;</span>
-          Zero trackers, zero analytics, zero data collection. Only contacts the public Return YouTube Dislike API.
-        </li>
-      </ul>
+      <div class="features-layout">
+        <ul class="clear">
+          <li>
+            <strong>Like/dislike ratios on videos</strong> <span class="arrow">&#8594;</span>
+            Shows a score on video cards on Home, Search, Shorts, and recommendations. Scores come from the Return YouTube Dislike (RYD) service, not YouTube, so they can occasionally be missing or delayed.
+          </li>
+          <li>
+            <strong>Pick your format</strong> <span class="arrow">&#8594;</span>
+            Display scores as a percentage (96%), a rating out of 10 (9.6/10), smiley emojis (😊 😐 😞), or 5-star SVGs with half stars.
+          </li>
+          <li>
+            <strong>Optional colour tint</strong> <span class="arrow">&#8594;</span>
+            Shades each score badge from red to green based on its rating, making low and high scores easy to spot.
+          </li>
+          <li>
+            <strong>Hide low-rated videos</strong> <span class="arrow">&#8594;</span>
+            Replaces videos below a threshold you set (for example 25% or 40%) with an empty dark placeholder so you don't see clickbait or autostart previews.
+          </li>
+          <li>
+            <strong>Filter Only Mode</strong> <span class="arrow">&#8594;</span>
+            Hides the score badges from the feed while keeping low-rated video filtering active.
+          </li>
+          <li>
+            <strong>Local on-device cache</strong> <span class="arrow">&#8594;</span>
+            Stores scores in your browser's IndexedDB for 7 days so the same video isn't queried again every time you scroll or navigate.
+          </li>
+          <li>
+            <strong>Remote selector updates</strong> <span class="arrow">&#8594;</span>
+            When YouTube tweaks its page layout, the extension pulls updated selector rules from GitHub without waiting for a browser store release.
+          </li>
+          <li>
+            <strong>What it connects to</strong> <span class="arrow">&#8594;</span>
+            Only the public Return YouTube Dislike API (to look up ratings by video ID) and GitHub raw (to check for selector updates). Zero tracking, and the code is open source under GPL-3.0.
+          </li>
+        </ul>
+
+        <aside class="popup-preview" aria-label="Extension Popup Preview">
+          <div class="popup-frame-wrapper">
+            <iframe src="./popup/index.html" title="RatioYT Settings Popup Preview" scrolling="no"></iframe>
+          </div>
+        </aside>
+      </div>
     </section>
 
     <!-- Footer -->
     <footer id="footer">
       <p>
-        RatioYT v1.0.0 · Free software under <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank"
-          rel="noopener">GPL-3.0-or-later</a> · by <a href="https://bittu.dev" target="_blank" rel="noopener">Bittu</a>
+        RatioYT · Free software under <a href="https://github.com/Bittu5134/RatioYT/blob/main/LICENSE" target="_blank"
+          rel="noopener">GPL-3.0</a> · by <a href="https://bittu.dev" target="_blank" rel="noopener">Bittu</a>
       </p>
       <div class="footer-nav">
         <a href="https://github.com/Bittu5134/RatioYT" target="_blank" rel="noopener">GitHub</a>
