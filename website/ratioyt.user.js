@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RatioYT - YouTube Like/Dislike Ratio
 // @namespace    https://ratioyt.bittu.dev/
-// @version      1.0.0
+// @version      1.1.0
 // @description  Cross-browser extension that shows like/dislike ratio scores on YouTube video cards.
 // @author       Bittu
 // @homepageURL  https://ratioyt.bittu.dev
@@ -27,7 +27,7 @@
   "use strict";
 
   const defaultSelectors = {
-  "remoteConfigUrl": "https://raw.githubusercontent.com/Bittu5134/RatioYT/main/src/config/selectors.json",
+  "remoteConfigUrl": "https://ratioyt.bittu.dev/selectors.json",
   "containers": {
     "observe": [
       "yt-lockup-view-model",
@@ -240,6 +240,40 @@ function createUserscriptPlatform() {
       return response.json();
     },
     onInit() {
+      // When userscript loads on the web dashboard route, bridge settings via postMessage
+      const isSettingsPage =
+        typeof window !== "undefined" &&
+        (window.location.hostname.includes("ratioyt.bittu.dev") ||
+          window.location.pathname.includes("/popup"));
+
+      if (isSettingsPage) {
+        const broadcast = () => {
+          storage.get(DEFAULTS, (settings) => {
+            window.postMessage(
+              {
+                type: "RATIOYT_SETTINGS_RESPONSE",
+                target: "userscript",
+                settings,
+              },
+              "*"
+            );
+          });
+        };
+
+        window.addEventListener("message", (event) => {
+          if (event.source !== window || !event.data) return;
+          if (event.data.type === "RATIOYT_PING") {
+            broadcast();
+          } else if (event.data.type === "RATIOYT_SET_SETTINGS" && event.data.settings) {
+            storage.set(event.data.settings);
+          }
+        });
+
+        storage.onChange(() => broadcast());
+        broadcast();
+        return;
+      }
+
       if (typeof GM_registerMenuCommand === "function") {
         const openSettings = () => {
           const url = "https://ratioyt.bittu.dev/popup/";
@@ -278,7 +312,7 @@ function createUserscriptPlatform() {
   // CORE ENGINE
   // =========================================
 const DEFAULTS = {
-  scoringSystem: "percentage",
+  scoringSystem: "stars",
   scoringColour: true,
   hideOnlyMode: false,
   hideLowScore: false,
@@ -286,52 +320,6 @@ const DEFAULTS = {
 };
 
 function initRatioYT({ platform, selectors }) {
-  const isSettingsPage =
-    window.location.hostname.includes("ratioyt.bittu.dev") ||
-    window.location.pathname.includes("/popup");
-
-  // =========================================
-  // SETTINGS BRIDGE (for /popup/ web route)
-  // =========================================
-  if (isSettingsPage) {
-    const targetType = platform.type || (typeof chrome !== "undefined" && chrome?.storage?.local ? "extension" : "userscript");
-
-    const broadcastSettings = () => {
-      platform.storage.get(DEFAULTS, (settings) => {
-        window.postMessage({
-          type: "RATIOYT_SETTINGS_RESPONSE",
-          target: targetType,
-          settings,
-        }, "*");
-      });
-    };
-
-    window.addEventListener("message", (event) => {
-      if (event.source !== window || !event.data) return;
-
-      if (event.data.type === "RATIOYT_PING") {
-        broadcastSettings();
-      } else if (event.data.type === "RATIOYT_SET_SETTINGS" && event.data.settings) {
-        platform.storage.set(event.data.settings);
-      }
-    });
-
-    platform.storage.onChange?.((changes) => {
-      platform.storage.get(DEFAULTS, (settings) => {
-        window.postMessage({
-          type: "RATIOYT_SETTINGS_UPDATED",
-          target: targetType,
-          settings,
-        }, "*");
-      });
-    });
-
-    // Announce availability to the page
-    broadcastSettings();
-    platform.onInit?.();
-    return;
-  }
-
   // =========================================
   // YOUTUBE DOM ENGINE
   // =========================================
@@ -739,7 +727,7 @@ function initRatioYT({ platform, selectors }) {
       return -1;
     }
     const total = (votes.likes ?? 0) + (votes.dislikes ?? 0);
-    return total > 0 ? Math.round((votes.likes / total) * 100) : 0;
+    return total > 0 ? Math.round(((votes.likes ?? 0) / total) * 100) : 0;
   }
 
   async function drainQueue() {
@@ -859,16 +847,65 @@ function initRatioYT({ platform, selectors }) {
     if (!document.hidden) reloadSettings();
   });
 
+  async function refreshRemoteSelectors() {
+    if (!selectors?.remoteConfigUrl) return;
+    try {
+      const res = await fetch(selectors.remoteConfigUrl, { cache: "no-cache" });
+      if (res.ok) {
+        const remote = await res.json();
+        if (remote?.containers?.observe) {
+          activeSelectors = { ...activeSelectors, ...remote };
+        }
+      }
+    } catch (_) {}
+  }
+
   initUserSettings();
   openDatabase().then(() => {
     startObserver();
+    refreshRemoteSelectors();
     platform.onInit?.();
   });
 }
 
 
   // Bootstrapping
+  const isSettingsPage =
+    typeof window !== "undefined" &&
+    (window.location.hostname.includes("ratioyt.bittu.dev") ||
+      window.location.pathname.includes("/popup"));
+
   const userscriptPlatform = createUserscriptPlatform();
+
+  if (isSettingsPage) {
+    const storage = userscriptPlatform.storage;
+    const broadcast = () => {
+      storage.get(DEFAULTS, (settings) => {
+        window.postMessage(
+          {
+            type: "RATIOYT_SETTINGS_RESPONSE",
+            target: "userscript",
+            settings,
+          },
+          "*"
+        );
+      });
+    };
+
+    window.addEventListener("message", (event) => {
+      if (event.source !== window || !event.data) return;
+      if (event.data.type === "RATIOYT_PING") {
+        broadcast();
+      } else if (event.data.type === "RATIOYT_SET_SETTINGS" && event.data.settings) {
+        storage.set(event.data.settings);
+      }
+    });
+
+    storage.onChange(() => broadcast());
+    broadcast();
+    return;
+  }
+
   initRatioYT({
     platform: userscriptPlatform,
     selectors: defaultSelectors,

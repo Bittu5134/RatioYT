@@ -65,7 +65,42 @@ ${bundledPlatformJs}
 ${bundledCoreJs}
 
   // Bootstrapping
+  const isSettingsPage =
+    typeof window !== "undefined" &&
+    (window.location.hostname.includes("ratioyt.bittu.dev") ||
+      window.location.pathname.includes("/popup"));
+
   const userscriptPlatform = createUserscriptPlatform();
+
+  if (isSettingsPage) {
+    const storage = userscriptPlatform.storage;
+    const broadcast = () => {
+      storage.get(DEFAULTS, (settings) => {
+        window.postMessage(
+          {
+            type: "RATIOYT_SETTINGS_RESPONSE",
+            target: "userscript",
+            settings,
+          },
+          "*"
+        );
+      });
+    };
+
+    window.addEventListener("message", (event) => {
+      if (event.source !== window || !event.data) return;
+      if (event.data.type === "RATIOYT_PING") {
+        broadcast();
+      } else if (event.data.type === "RATIOYT_SET_SETTINGS" && event.data.settings) {
+        storage.set(event.data.settings);
+      }
+    });
+
+    storage.onChange(() => broadcast());
+    broadcast();
+    return;
+  }
+
   initRatioYT({
     platform: userscriptPlatform,
     selectors: defaultSelectors,
