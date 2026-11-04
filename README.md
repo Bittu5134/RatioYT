@@ -16,12 +16,13 @@ Scores come from the [Return YouTube Dislike](https://returnyoutubedislike.com) 
 
 ## Features
 
-- Score badges on video cards: percentage, 10-point ratio, smiley faces, or 5-star SVGs with half stars
-- Optional dynamic score colouring (red → green)
-- Filter Only Mode: filter the feed without showing badges
-- Hide low-rated videos (home & search) behind a blur that stays until you turn it off
-- Adjustable minimum-score threshold
-- Remote-updateable selector config, so YouTube UI changes don't need an extension update
+- **Like/dislike ratios on cards:** Shown on Home, Search, Shorts, and sidebar recommendations.
+- **Hide clickbait by score:** Videos scoring below your chosen threshold are replaced with empty dark placeholders.
+- **Four rating formats:** Choose between Percentage (96%), 10-point (9.6/10), smileys (😊 😐 😞), or 5-star SVGs.
+- **Red-to-green colouring:** Badge colour shifts with the score, so low and high ratings stand out at a glance.
+- **Filter Only Mode:** Keeps low-rated video filtering active while hiding the score badges from your feed.
+- **7-day local cache:** Ratings are stored in your browser's IndexedDB, so repeat visits don't hit the network.
+- **Open source, no tracking:** Free software under GPL-3.0. Zero analytics, no accounts, and no telemetry.
 
 ## Project layout
 

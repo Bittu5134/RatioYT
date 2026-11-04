@@ -9,6 +9,17 @@
     content="A lightweight browser extension that brings like/dislike ratios back to YouTube video cards and filters low-rated videos. Open source, no telemetry.">
   <link rel="icon" type="image/png" href="./logo.png">
   <link rel="stylesheet" href="./style.css">
+
+  <!-- OpenGraph / Social Meta Tags -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="RatioYT for YouTube">
+  <meta property="og:description" content="A lightweight browser extension that brings like/dislike ratios back to YouTube video cards and filters low-rated videos. Open source, zero telemetry.">
+  <meta property="og:url" content="https://ratioyt.bittu.dev">
+  <meta property="og:image" content="https://ratioyt.bittu.dev/logo.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="RatioYT for YouTube">
+  <meta name="twitter:description" content="A lightweight browser extension that brings like/dislike ratios back to YouTube video cards and filters low-rated videos.">
+  <meta name="twitter:image" content="https://ratioyt.bittu.dev/logo.png">
 </head>
 
 <body>
@@ -48,6 +59,10 @@
           aria-label="Firefox Add-ons" title="Firefox Add-ons">
           <img src="./images/firefox.svg" width="40" height="40" alt="Firefox">
         </a>
+        <a href="https://chromewebstore.google.com/detail/ratioyt" target="_blank" rel="noopener" class="browser-badge"
+          aria-label="Brave (Chrome Web Store)" title="Brave">
+          <img src="./images/brave.svg" width="40" height="40" alt="Brave">
+        </a>
         <a href="https://microsoftedge.microsoft.com/addons/detail/ratioyt" target="_blank" rel="noopener"
           class="browser-badge" aria-label="Microsoft Edge Add-ons" title="Edge">
           <img src="./images/edge.svg" width="40" height="40" alt="Edge">
@@ -55,10 +70,6 @@
         <a href="https://addons.opera.com/extensions/details/ratioyt/" target="_blank" rel="noopener"
           class="browser-badge" aria-label="Opera Add-ons" title="Opera">
           <img src="./images/opera.svg" width="40" height="40" alt="Opera">
-        </a>
-        <a href="https://chromewebstore.google.com/detail/ratioyt" target="_blank" rel="noopener" class="browser-badge"
-          aria-label="Brave (Chrome Web Store)" title="Brave">
-          <img src="./images/brave.svg" width="40" height="40" alt="Brave">
         </a>
       </div>
 
@@ -131,7 +142,8 @@
 
         <aside class="popup-preview" aria-label="Extension Popup Preview">
           <div class="popup-frame-wrapper">
-            <iframe src="./popup/index.html" title="RatioYT Settings Popup Preview" loading="lazy" scrolling="no"></iframe>
+            <iframe src="./popup/index.html" title="RatioYT Settings Popup Preview" loading="lazy"
+              scrolling="no"></iframe>
           </div>
         </aside>
       </div>

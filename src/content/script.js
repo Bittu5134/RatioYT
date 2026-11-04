@@ -19,7 +19,7 @@ const SMILEY_MEH = 40;
 
 const DB_NAME = "RatioYT";
 const DB_STORE = "scores";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 let dbInstance = null;
 
 // In-memory cache for synchronous instant lookups during DOM scans
@@ -124,9 +124,10 @@ function openDatabase() {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = (e) => {
       const db = e.target.result;
-      if (!db.objectStoreNames.contains(DB_STORE)) {
-        db.createObjectStore(DB_STORE, { keyPath: "videoId" });
+      if (db.objectStoreNames.contains(DB_STORE)) {
+        db.deleteObjectStore(DB_STORE);
       }
+      db.createObjectStore(DB_STORE, { keyPath: "videoId" });
     };
     request.onsuccess = (e) => {
       dbInstance = e.target.result;
@@ -397,18 +398,17 @@ function applyScore(card, badge, score) {
 // 5. QUEUE & NETWORK
 // =========================================
 
-// Real Return YouTube Dislike API fetch (kept for future activation):
-// async function fetchScore({ videoId }) {
-//   const response = await fetch(`https://returnyoutubedislikeapi.com/votes?videoId=${videoId}`);
-//   if (!response.ok) throw new Error(`HTTP ${response.status}`);
-//   const votes = await response.json();
-//   if (votes.deleted || (votes.likes === undefined && votes.dislikes === undefined)) return -1;
-//   const total = (votes.likes ?? 0) + (votes.dislikes ?? 0);
-//   return total > 0 ? Math.round((votes.likes / total) * 100) : 0;
-// }
-
 async function fetchScore({ videoId }) {
-  return Math.floor(Math.random() * 101);
+  const response = await fetch(
+    `https://returnyoutubedislikeapi.com/votes?videoId=${videoId}`
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const votes = await response.json();
+  if (votes.deleted || (votes.likes === undefined && votes.dislikes === undefined)) {
+    return -1;
+  }
+  const total = (votes.likes ?? 0) + (votes.dislikes ?? 0);
+  return total > 0 ? Math.round((votes.likes / total) * 100) : 0;
 }
 
 async function drainQueue() {
