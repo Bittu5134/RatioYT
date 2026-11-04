@@ -45,5 +45,5 @@
       "strict_min_version": "109.0"
     }
   },
-  "author": "Bittu <hello@bittu.dev>"
+  "firefox:author": "Bittu <hello@bittu.dev>"
 }

@@ -240,40 +240,6 @@ function createUserscriptPlatform() {
       return response.json();
     },
     onInit() {
-      // When userscript loads on the web dashboard route, bridge settings via postMessage
-      const isSettingsPage =
-        typeof window !== "undefined" &&
-        (window.location.hostname.includes("ratioyt.bittu.dev") ||
-          window.location.pathname.includes("/popup"));
-
-      if (isSettingsPage) {
-        const broadcast = () => {
-          storage.get(DEFAULTS, (settings) => {
-            window.postMessage(
-              {
-                type: "RATIOYT_SETTINGS_RESPONSE",
-                target: "userscript",
-                settings,
-              },
-              "*"
-            );
-          });
-        };
-
-        window.addEventListener("message", (event) => {
-          if (event.source !== window || !event.data) return;
-          if (event.data.type === "RATIOYT_PING") {
-            broadcast();
-          } else if (event.data.type === "RATIOYT_SET_SETTINGS" && event.data.settings) {
-            storage.set(event.data.settings);
-          }
-        });
-
-        storage.onChange(() => broadcast());
-        broadcast();
-        return;
-      }
-
       if (typeof GM_registerMenuCommand === "function") {
         const openSettings = () => {
           const url = "https://ratioyt.bittu.dev/popup/";
