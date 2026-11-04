@@ -10,7 +10,7 @@ const UI = {
 };
 
 const DEFAULTS = {
-  scoringSystem: "percentage",
+  scoringSystem: "stars",
   scoringColour: true,
   hideOnlyMode: false,
   hideLowScore: false,

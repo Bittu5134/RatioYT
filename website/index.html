@@ -39,6 +39,7 @@
         <a href="./index.html" class="active">Home</a>
         <a href="#install">Install</a>
         <a href="#features">Features</a>
+        <a href="#privacy">Privacy</a>
         <a href="https://www.patreon.com/cw/LazyBittu" target="_blank" rel="noopener" class="donate_nav">Support ❤️</a>
       </nav>
 
@@ -110,10 +111,6 @@
       <div class="features-layout">
         <ul class="clear">
           <li>
-            <strong>Extension or Userscript</strong> <span class="arrow">&#8594;</span>
-            Install as a standalone browser extension or run as a lightweight userscript with full settings support.
-          </li>
-          <li>
             <strong>Like/dislike ratios on cards</strong> <span class="arrow">&#8594;</span>
             Shown on Home, Search, Shorts, and sidebar recommendations.
           </li>
@@ -134,12 +131,8 @@
             Keeps low-rated video filtering active while hiding the score badges from your feed.
           </li>
           <li>
-            <strong>7-day local cache</strong> <span class="arrow">&#8594;</span>
-            Ratings are stored in your browser's IndexedDB, so repeat visits don't hit the network.
-          </li>
-          <li>
-            <strong>Open source, no tracking</strong> <span class="arrow">&#8594;</span>
-            Free software under GPL-3.0. Zero analytics, no accounts, and no telemetry.
+            <strong>Extension or Userscript</strong> <span class="arrow">&#8594;</span>
+            Install as a standalone browser extension or run as a lightweight userscript with full settings support.
           </li>
         </ul>
 
@@ -152,15 +145,41 @@
       </div>
     </section>
 
+    <!-- Privacy Policy -->
+    <section id="privacy" class="section-block">
+      <h3>Privacy Policy</h3>
+      <ul class="clear">
+        <li>
+          <strong>Zero Telemetry</strong> <span class="arrow">&#8594;</span>
+          RatioYT collects, stores, and transmits zero personal data, zero browsing history, and zero analytics.
+        </li>
+        <li>
+          <strong>Network Requests</strong> <span class="arrow">&#8594;</span>
+          The extension makes outbound network requests to only two endpoints:
+          (1) the public <a href="https://returnyoutubedislike.com" target="_blank" rel="noopener">Return YouTube Dislike API</a> (to query ratings by video ID), and
+          (2) <a href="./selectors.json">ratioyt.bittu.dev/selectors.json</a> (to check for YouTube layout updates).
+        </li>
+        <li>
+          <strong>On-Device Storage</strong> <span class="arrow">&#8594;</span>
+          Ratings are stored locally in your browser's IndexedDB for 7 days so repeat visits skip the network. User preferences stay in your browser's local storage.
+        </li>
+        <li>
+          <strong>Open Source</strong> <span class="arrow">&#8594;</span>
+          RatioYT is free software licensed under GPL-3.0-or-later. Full source code is public and verifiable on <a href="https://github.com/Bittu5134/RatioYT" target="_blank" rel="noopener">GitHub</a>.
+        </li>
+      </ul>
+    </section>
+
     <!-- Footer -->
     <footer id="footer">
       <p>
-        RatioYT · Free software under <a href="https://github.com/Bittu5134/RatioYT/blob/main/LICENSE" target="_blank"
+        RatioYT v1.1.0 · Free software under <a href="https://github.com/Bittu5134/RatioYT/blob/main/LICENSE" target="_blank"
           rel="noopener">GPL-3.0</a> · by <a href="https://bittu.dev" target="_blank" rel="noopener">Bittu</a>
       </p>
       <div class="footer-nav">
         <a href="https://github.com/Bittu5134/RatioYT" target="_blank" rel="noopener">GitHub</a>
         <a href="./ratioyt.user.js">Userscript</a>
+        <a href="#privacy">Privacy</a>
         <a href="https://github.com/Bittu5134/RatioYT/issues" target="_blank" rel="noopener">Issues</a>
         <a href="https://bittu.dev/discord" target="_blank" rel="noopener">Discord</a>
         <a href="https://www.patreon.com/cw/LazyBittu" target="_blank" rel="noopener">Patreon</a>
