@@ -1,176 +1,94 @@
-<a href="https://extension.js.org" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Powered%20by%20%7C%20Extension.js-0971fe" alt="Powered by Extension.js" align="right" /></a>
+<div align="center">
+<img src="./website/logo.png" width="120" alt="RatioYT logo" />
 
-<img src="./src/images/logo.png" alt="RatioYT" width="88" height="88" align="left" hspace="16" vspace="4" />
+# Ratio · YT
 
-# RatioYT
+### **A lightweight browser extension & userscript that rates YouTube videos and filters low-rated videos.**  
+### [Visit website at ratioyt.bittu.dev](https://ratioyt.bittu.dev)
 
-> Cross-browser extension that shows like/dislike ratio scores on YouTube video cards — on the home feed, search, shorts, playlists and more.
+<br>
 
-[Website](https://ratioyt.bittu.dev) · [Discord](https://bittu.dev/discord) · [Support on Patreon](https://www.patreon.com/cw/LazyBittu)
+<img src="./assets/screenshot.png" width="850" alt="RatioYT screenshot" />
 
-<br clear="left" />
+<br>
 
-Scores come from the [Return YouTube Dislike](https://returnyoutubedislike.com) API and are cached locally in IndexedDB, so browsing stays fast and the API isn't hammered.
+</div>
 
-![screenshot](./assets/screenshot.png)
+## Install
+
+| Platform | Link |
+|---|---|
+| **Chrome** | [Chrome Web Store](https://chromewebstore.google.com/detail/ratioyt) |
+| **Firefox** | [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/ratioyt/) |
+| **Brave** | [Chrome Web Store](https://chromewebstore.google.com/detail/ratioyt) |
+| **Edge** | [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/ratioyt) |
+| **Userscript** | [Install `ratioyt.user.js`](https://ratioyt.bittu.dev/ratioyt.user.js) |
+
+Source builds and packages are also available on [GitHub Releases](https://github.com/Bittu5134/RatioYT/releases).
+
+<br>
 
 ## Features
 
-- **Like/dislike ratios on cards:** Shown on Home, Search, Shorts, and sidebar recommendations.
-- **Hide clickbait by score:** Videos scoring below your chosen threshold are replaced with empty dark placeholders.
-- **Four rating formats:** Choose between Percentage (96%), 10-point (9.6/10), smileys (😊 😐 😞), or 5-star SVGs.
-- **Red-to-green colouring:** Badge colour shifts with the score, so low and high ratings stand out at a glance.
-- **Filter Only Mode:** Keeps low-rated video filtering active while hiding the score badges from your feed.
-- **7-day local cache:** Ratings are stored in your browser's IndexedDB, so repeat visits don't hit the network.
-- **Open source, no tracking:** Free software under GPL-3.0. Zero analytics, no accounts, and no telemetry.
+- **Extension or Userscript**: Install as a standalone browser extension or run as a lightweight userscript with full settings support.
+- **Like/dislike ratios on cards**: Shown on Home, Search, Shorts, and sidebar recommendations.
+- **Hide clickbait by score**: Videos scoring below your chosen threshold are replaced with empty placeholders.
+- **Four rating formats**: Choose between Percentage (96%), 10-point (9.6/10), smileys (😊 😐 😞), or ★★★★★.
+- **Red-to-green colouring**: Badge colour shifts with the score, so low and high ratings stand out at a glance.
+- **Filter Only Mode**: Keeps low-rated video filtering active while hiding the score badges from your feed.
+- **7-day local cache**: Ratings are stored in your browser's IndexedDB, so repeat visits don't hit the network.
+- **Open source, no tracking**: Free software under GPL-3.0. Zero analytics, no accounts, and no telemetry.
 
-## Project layout
+<br>
 
-```
-src/
-├─ manifest.json
-├─ config/selectors.json    single source of truth; also fetched as the remote config
-├─ content/script.js        content script (badges, cache, filtering)
-├─ popup/                   settings popup (html, js, css)
-└─ images/                  logo.png + generated icons
-website/                    static informational site
-assets/                     screenshot used by this README
-```
+## Settings
 
-## Commands
+Settings can be managed from the extension popup or the web dashboard at [ratioyt.bittu.dev/popup](https://ratioyt.bittu.dev/popup/):
 
-### dev
+- **Score Format**: Percentage · 10-point ratio · Smiley faces · Star rating
+- **Colour Scores**: Toggle dynamic red-to-green rating gradient
+- **Filter Only Mode**: Filter low-rated videos silently without showing badges
+- **Hide Low-Rated Videos**: Toggle auto-replacing low-scoring cards
+- **Minimum Score**: Adjustable threshold slider (0–100%)
 
-Run the extension in development mode. Target a browser with `--browser`:
+<br>
+
+## Run Locally
+
+Clone this Git repository locally and run these commands:
 
 ```bash
+npm install
 npm run dev
-npm run dev -- --browser=firefox
-npm run dev -- --browser=edge
 ```
 
-### build
-
-Build for production. Convenience scripts target each browser:
+### Build
 
 ```bash
-npm run build           # Chrome (default)
-npm run build:firefox
-npm run build:edge
+# Build browser extension (Chrome)
+npm run build
+
+# Build userscript
+npm run build:userscript
+
+# Build all targets
+npm run build:all
 ```
 
-### preview
+<br>
 
-Preview the production build in the browser:
+## Built Using
 
-```bash
-npm run preview
-```
+[Extension.js](https://extension.js.org/) · [Return YouTube Dislike API](https://returnyoutubedislikeapi.com/) · [Vanilla JS](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 
-## Learn more
-
-[Extension.js docs](https://extension.js.org).
-
-## License
-
-RatioYT is free software, released under the **GNU General Public License v3.0 or later**
-(GPL-3.0-or-later). See [LICENSE](./LICENSE) for the full text.
-
-##### DEVLOGS
-
-
-Devlog #1: Initial Design and goals
-
-Whenever I look up niches stuff on YouTube, many times low quality clickbait pops up inn the feed, I was getting annoyed so i made this extension.
-The goal is to basically show some kind of % or rating at the bottom of the every tile in the yt home screen, those values will be the ratio of likes to dislikes
-
-for this project these are the things I'm going to use
-- Return YouTube dislike API (since YouTube stopped providing dislike data itself)
-- Extension.js for cross browser Extensions
-- Browser Storage API for caching API requests
-
-Some extra features I would like to add would be
-- A settings Popup
-- hiding videos with low score
-- Ability to use different rating quantifiers
-
-This is my first time making an extension, so far I have managed to setup the initial `manifest.json` and make a basic popup
-
-![image](https://cdn.hackclub.com/019ea6f0-1686-79ea-9d23-e745cd03c215/Screenshot%202026-06-08%20163525.png)
+<br>
 
 ---
 
-Devlog #2: Injecting Text Into YouTube UI
+<div align="center">
 
-First things first I changed the project's name from `RatioYT` to `ThumbScore for YouTube` (I suck at naming things)
+RatioYT · Free software under [GPL-3.0](https://github.com/Bittu5134/RatioYT/blob/main/LICENSE) · by [Bittu](https://bittu.dev)
 
-now as for the progress, I managed to inject placeholder text into youtube UI
-and ngl that was more troublesome than I expected it to be.
+[Website](https://ratioyt.bittu.dev) · [Discord](https://bittu.dev/discord) · [Email](mailto:hello@bittu.dev) · [Patreon ❤️](https://www.patreon.com/cw/LazyBittu)
 
-![image](https://cdn.hackclub.com/019eaaf7-d05b-77f4-b0a6-fdf99e024f3b/Screenshot%202026-06-09%20112230.png)
-(I am using a clean profile for development, so this is not what my actual YT recommendations look like ^_^ )
-
-when I was inspecting the HTML it had so many tags and elements TWT
-also the structure of videos arent consisitent throught the youtube system
-
-there are different structers for the videos and shorts in these places
-- Homepage
-- Serach
-- Shorts
-- Playlists
-- Mixes
-- YT Channel Page
-- Video Queues
-- Playlist Queues
-
-for now I think I managed to insert text in all these places programamtically.
-But after doing this initial setup I found one major issue, There are too many videos, the users will hit API rate limits if they try to fetch video data for each of them, I can add rate limits, but then the extension wont be responsive enough.
-
-I have a plan for this isuues, but i'll first lookup online about similar implementaions before deciding on my plan of action.
-
----
-
-
-Devlog #3: Major Code Refactoring and Improvements
-
-Today I worked on rewriting my code where I thought performance was being sacrificed.
-
-I have divided the code into 3 parts
-- UI Update Script
-- Storage Cleanup Script
-- \<planned for future part>
-
-I'm using an IndexDB database to maintain a local copy of all the YT video ids and their scores and how long before their cache needs to be purged
-
-now explaining what the 3 pieces do in simple terms
-
-the UI scripts looks for YouTube DOM updates and extracts video ids and places a placeholder div where the score will be added
-then the score is first looked up in the local database and if not found its looked up in the external API
-
-The UI script pulls data from the database once on every page load and it does not bother checking if the cache is expired, that's handled by the storage background script that runs every 15 minutes and cleans the storage of old cache
-
-I have created a robust system of caching with 3 different tiers.
-
-Oh and Kind of random but this little function that coverts score into a HSL colour code in a range between red and green is probably my favorite thing I did today, there were other things I did today that were more difficult to achieve for me, but this was more fun than anyone of them.
-
-![image](https://cdn.hackclub.com/019eb189-533d-7b88-9b31-881858894016/Screenshot%202026-06-10%20115623.png)
-![image](https://cdn.hackclub.com/019eb189-7def-7a59-a533-80b8ee7ce518/Screenshot%202026-06-10%20115608.png)
-*[The Scores are randomly generated for now, those aren't real ratings]*
-
-I also learned a lot of difference between browser compatibility for extension development, good thing i started with a framework otherwise I would have been screwed trying to build for both chrome and firefox
-
----
-
-Devlog #4: Set Backs and Change of design
-
-Just a short journel, I was qorking on the background cache cleaning and updating script, But I overlooked a critical point.
-The IndexDB i'm using to save data is stored per origin, meaning the indexDB used by the content script is not the same as the indexDB used by the background scipt.
-
-This has forced me to fundamentally change my approach and I'll be shifting all the code to the content scripts.
-
-## Popup settings
-
-Score format · Score colour · Filter Only Mode · Hide low-rated videos · Minimum score
-
----
-
+</div>
