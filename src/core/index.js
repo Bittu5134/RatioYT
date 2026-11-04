@@ -1,5 +1,5 @@
 export const DEFAULTS = {
-  scoringSystem: "percentage",
+  scoringSystem: "stars",
   scoringColour: true,
   hideOnlyMode: false,
   hideLowScore: false,
@@ -7,52 +7,6 @@ export const DEFAULTS = {
 };
 
 export function initRatioYT({ platform, selectors }) {
-  const isSettingsPage =
-    window.location.hostname.includes("ratioyt.bittu.dev") ||
-    window.location.pathname.includes("/popup");
-
-  // =========================================
-  // SETTINGS BRIDGE (for /popup/ web route)
-  // =========================================
-  if (isSettingsPage) {
-    const targetType = platform.type || (typeof chrome !== "undefined" && chrome?.storage?.local ? "extension" : "userscript");
-
-    const broadcastSettings = () => {
-      platform.storage.get(DEFAULTS, (settings) => {
-        window.postMessage({
-          type: "RATIOYT_SETTINGS_RESPONSE",
-          target: targetType,
-          settings,
-        }, "*");
-      });
-    };
-
-    window.addEventListener("message", (event) => {
-      if (event.source !== window || !event.data) return;
-
-      if (event.data.type === "RATIOYT_PING") {
-        broadcastSettings();
-      } else if (event.data.type === "RATIOYT_SET_SETTINGS" && event.data.settings) {
-        platform.storage.set(event.data.settings);
-      }
-    });
-
-    platform.storage.onChange?.((changes) => {
-      platform.storage.get(DEFAULTS, (settings) => {
-        window.postMessage({
-          type: "RATIOYT_SETTINGS_UPDATED",
-          target: targetType,
-          settings,
-        }, "*");
-      });
-    });
-
-    // Announce availability to the page
-    broadcastSettings();
-    platform.onInit?.();
-    return;
-  }
-
   // =========================================
   // YOUTUBE DOM ENGINE
   // =========================================
@@ -460,7 +414,7 @@ export function initRatioYT({ platform, selectors }) {
       return -1;
     }
     const total = (votes.likes ?? 0) + (votes.dislikes ?? 0);
-    return total > 0 ? Math.round((votes.likes / total) * 100) : 0;
+    return total > 0 ? Math.round(((votes.likes ?? 0) / total) * 100) : 0;
   }
 
   async function drainQueue() {
@@ -580,9 +534,23 @@ export function initRatioYT({ platform, selectors }) {
     if (!document.hidden) reloadSettings();
   });
 
+  async function refreshRemoteSelectors() {
+    if (!selectors?.remoteConfigUrl) return;
+    try {
+      const res = await fetch(selectors.remoteConfigUrl, { cache: "no-cache" });
+      if (res.ok) {
+        const remote = await res.json();
+        if (remote?.containers?.observe) {
+          activeSelectors = { ...activeSelectors, ...remote };
+        }
+      }
+    } catch (_) {}
+  }
+
   initUserSettings();
   openDatabase().then(() => {
     startObserver();
+    refreshRemoteSelectors();
     platform.onInit?.();
   });
 }
