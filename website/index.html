@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RatioYT — Like/dislike ratings for YouTube</title>
-  <meta name="description" content="A lightweight browser extension that brings like/dislike ratios back to YouTube video cards and filters low-rated videos. Open source, no telemetry.">
+  <title>RatioYT for YouTube</title>
+  <meta name="description"
+    content="A lightweight browser extension that brings like/dislike ratios back to YouTube video cards and filters low-rated videos. Open source, no telemetry.">
   <link rel="icon" type="image/png" href="./logo.png">
   <link rel="stylesheet" href="./style.css">
 </head>
+
 <body>
 
   <div id="wrapper">
@@ -24,42 +27,49 @@
       <nav class="nav_bar" aria-label="Main navigation">
         <a href="./index.html" class="active">Home</a>
         <a href="#install">Install</a>
-        <a href="#features">Features</a>
-        <a href="#how-it-works">How It Works</a>
-        <a href="#faq">FAQ</a>
+        <a href="#features">Features & How It Works</a>
         <a href="https://www.patreon.com/cw/LazyBittu" target="_blank" rel="noopener" class="donate_nav">Support ❤️</a>
       </nav>
 
       <h2 class="title">
-        A lightweight browser extension that brings like/dislike ratios back to YouTube video cards and filters low-rated videos.
+        A lightweight browser extension that brings like/dislike ratios back to YouTube video cards and filters
+        low-rated videos.
       </h2>
     </header>
 
     <!-- Install Badges -->
     <section id="install" class="section-block">
       <div class="install-icons">
-        <a href="https://chromewebstore.google.com/detail/ratioyt" target="_blank" rel="noopener" class="browser-badge" aria-label="Chrome Web Store" title="Chrome Web Store">
+        <a href="https://chromewebstore.google.com/detail/ratioyt" target="_blank" rel="noopener" class="browser-badge"
+          aria-label="Chrome Web Store" title="Chrome Web Store">
           <img src="./images/chrome.svg" width="40" height="40" alt="Chrome">
         </a>
-        <a href="https://addons.mozilla.org/firefox/addon/ratioyt/" target="_blank" rel="noopener" class="browser-badge" aria-label="Firefox Add-ons" title="Firefox Add-ons">
+        <a href="https://addons.mozilla.org/firefox/addon/ratioyt/" target="_blank" rel="noopener" class="browser-badge"
+          aria-label="Firefox Add-ons" title="Firefox Add-ons">
           <img src="./images/firefox.svg" width="40" height="40" alt="Firefox">
         </a>
-        <a href="https://microsoftedge.microsoft.com/addons/detail/ratioyt" target="_blank" rel="noopener" class="browser-badge" aria-label="Microsoft Edge Add-ons" title="Edge">
+        <a href="https://microsoftedge.microsoft.com/addons/detail/ratioyt" target="_blank" rel="noopener"
+          class="browser-badge" aria-label="Microsoft Edge Add-ons" title="Edge">
           <img src="./images/edge.svg" width="40" height="40" alt="Edge">
         </a>
-        <a href="https://addons.opera.com/extensions/details/ratioyt/" target="_blank" rel="noopener" class="browser-badge" aria-label="Opera Add-ons" title="Opera">
+        <a href="https://addons.opera.com/extensions/details/ratioyt/" target="_blank" rel="noopener"
+          class="browser-badge" aria-label="Opera Add-ons" title="Opera">
           <img src="./images/opera.svg" width="40" height="40" alt="Opera">
         </a>
-        <a href="https://chromewebstore.google.com/detail/ratioyt" target="_blank" rel="noopener" class="browser-badge" aria-label="Brave (Chrome Web Store)" title="Brave">
+        <a href="https://chromewebstore.google.com/detail/ratioyt" target="_blank" rel="noopener" class="browser-badge"
+          aria-label="Brave (Chrome Web Store)" title="Brave">
           <img src="./images/brave.svg" width="40" height="40" alt="Brave">
         </a>
-        <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener" class="browser-badge" aria-label="GitHub Releases" title="GitHub Releases">
+        <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener" class="browser-badge"
+          aria-label="GitHub Releases" title="GitHub Releases">
           <img src="./images/github.svg" width="40" height="40" alt="GitHub">
         </a>
       </div>
 
       <p class="install-note">
-        <strong>Note:</strong> RatioYT is available across all major Chromium and Gecko browsers. Source builds are available on <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener">GitHub Releases</a>.
+        <strong>Note:</strong> RatioYT is available across all major Chromium and Gecko browsers. Source builds are
+        available on <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener">GitHub
+          Releases</a>.
       </p>
     </section>
 
@@ -89,16 +99,20 @@
       </div>
     </section>
 
-    <!-- Features -->
+    <!-- Features & How It Works -->
     <section id="features" class="section-block">
-      <h3>Features</h3>
+      <h3>Features & How It Works</h3>
       <ul class="clear">
         <li>
           <strong>Score Badges</strong> <span class="arrow">&#8594;</span>
           Displays authentic like/dislike ratios on video cards across Home, Search, Shorts, and watch suggestions.
         </li>
         <li>
-          <strong>Four Score Formats</strong> <span class="arrow">&#8594;</span>
+          <strong>Score Source</strong> <span class="arrow">&#8594;</span>
+          Scores come from the public <a href="https://returnyoutubedislike.com" target="_blank" rel="noopener">Return YouTube Dislike</a> API database.
+        </li>
+        <li>
+          <strong>Four Display Formats</strong> <span class="arrow">&#8594;</span>
           Choose between Percentage (96%), 10-point decimal (9.6/10), Smiley emojis (😊 😐 😞), or 5-star SVGs with half stars.
         </li>
         <li>
@@ -107,7 +121,7 @@
         </li>
         <li>
           <strong>Filtered Placeholders</strong> <span class="arrow">&#8594;</span>
-          Videos below your custom score threshold are replaced with dark placeholders without shifting the grid or autostarting previews.
+          Videos below your custom score threshold are replaced in-place with dark placeholders, stopping video previews and audio.
         </li>
         <li>
           <strong>Quiet Mode</strong> <span class="arrow">&#8594;</span>
@@ -115,7 +129,7 @@
         </li>
         <li>
           <strong>On-Device Cache</strong> <span class="arrow">&#8594;</span>
-          Scores are saved locally in IndexedDB for 7 days so repeat visits stay instant without hammering the API.
+          Lookups are cached on your machine in IndexedDB for 7 days; repeat views take zero network requests and render instantly.
         </li>
         <li>
           <strong>Remote Selectors</strong> <span class="arrow">&#8594;</span>
@@ -128,56 +142,11 @@
       </ul>
     </section>
 
-    <!-- How it works -->
-    <section id="how-it-works" class="section-block">
-      <h3>How it works</h3>
-      <ul class="clear">
-        <li>
-          <strong>Score Source</strong> <span class="arrow">&#8594;</span>
-          Scores come from the public <a href="https://returnyoutubedislike.com" target="_blank" rel="noopener">Return YouTube Dislike</a> API database.
-        </li>
-        <li>
-          <strong>IndexedDB Cache</strong> <span class="arrow">&#8594;</span>
-          Lookups are cached on your machine for 7 days; cache hits take zero network requests and render synchronously.
-        </li>
-        <li>
-          <strong>DOM Insertion</strong> <span class="arrow">&#8594;</span>
-          Scores are injected directly into YouTube's metadata lines via a lightweight MutationObserver.
-        </li>
-        <li>
-          <strong>Filtering</strong> <span class="arrow">&#8594;</span>
-          Low-scoring videos are replaced in-place with dark gradient placeholders, stopping video previews and audio completely.
-        </li>
-      </ul>
-    </section>
-
-    <!-- FAQ -->
-    <section id="faq" class="section-block">
-      <h3>Frequently Asked Questions</h3>
-      <ul class="clear">
-        <li>
-          <strong>Where do the scores come from?</strong> <span class="arrow">&#8594;</span>
-          From the Return YouTube Dislike API, which calculates ratings from archived dislike data and continuous community contributions.
-        </li>
-        <li>
-          <strong>Does RatioYT track or send my browsing data?</strong> <span class="arrow">&#8594;</span>
-          No. RatioYT contains zero analytics and zero telemetry. It only makes requests to fetch video scores by ID and refresh selector configs.
-        </li>
-        <li>
-          <strong>Why are some videos replaced with a dark placeholder?</strong> <span class="arrow">&#8594;</span>
-          You have "Hide low-rated videos" enabled, and those videos scored below your chosen threshold. Lower the threshold or turn the toggle off in the popup to see them.
-        </li>
-        <li>
-          <strong>How do I report an issue or suggest a feature?</strong> <span class="arrow">&#8594;</span>
-          Open an issue on the <a href="https://github.com/Bittu5134/RatioYT/issues" target="_blank" rel="noopener">GitHub repository</a> or message us on <a href="https://bittu.dev/discord" target="_blank" rel="noopener">Discord</a>.
-        </li>
-      </ul>
-    </section>
-
     <!-- Footer -->
     <footer id="footer">
       <p>
-        RatioYT v1.0.0 · Free software under <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GPL-3.0-or-later</a> · by <a href="https://bittu.dev" target="_blank" rel="noopener">Bittu</a>
+        RatioYT v1.0.0 · Free software under <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank"
+          rel="noopener">GPL-3.0-or-later</a> · by <a href="https://bittu.dev" target="_blank" rel="noopener">Bittu</a>
       </p>
       <div class="footer-nav">
         <a href="https://github.com/Bittu5134/RatioYT" target="_blank" rel="noopener">GitHub</a>
@@ -191,4 +160,5 @@
   </div>
 
 </body>
+
 </html>
