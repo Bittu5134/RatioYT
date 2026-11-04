@@ -1,5 +1,5 @@
 {
-  "remoteConfigUrl": "https://raw.githubusercontent.com/Bittu5134/RatioYT/main/src/config/selectors.json",
+  "remoteConfigUrl": "https://ratioyt.bittu.dev/selectors.json",
   "containers": {
     "observe": [
       "yt-lockup-view-model",

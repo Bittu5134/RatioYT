@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/chrome-manifest.json",
   "manifest_version": 3,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "RatioYT",
   "description": "Adds like/dislike ratio to YouTube videos.",
   "homepage_url": "https://ratioyt.bittu.dev",
@@ -27,9 +27,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://*.youtube.com/*",
-        "https://ratioyt.bittu.dev/popup/*",
-        "https://ratioyt.bittu.dev/popup"
+        "https://*.youtube.com/*"
       ],
       "js": [
         "content/script.js"
@@ -39,15 +37,13 @@
   ],
   "host_permissions": [
     "https://returnyoutubedislikeapi.com/*",
-    "https://raw.githubusercontent.com/*"
+    "https://ratioyt.bittu.dev/*"
   ],
-  "browser_specific_settings": {
+  "firefox:browser_specific_settings": {
     "gecko": {
       "id": "ratioyt@bittu.dev",
       "strict_min_version": "109.0"
     }
   },
-  "author": {
-    "email": "hello@bittu.dev"
-  }
+  "author": "Bittu <hello@bittu.dev>"
 }
