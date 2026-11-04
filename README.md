@@ -1,19 +1,14 @@
 <div align="center">
 
-<img src="./website/logo.png" alt="RatioYT logo" width="130">
-
 # RatioYT
 
 ### A lightweight browser extension & userscript that brings like/dislike ratios back to YouTube.
 
-[![Website](https://img.shields.io/badge/Website-ratioyt.bittu.dev-ffd23f?style=flat-square)](https://ratioyt.bittu.dev)
 [![Discord](https://img.shields.io/discord/877508637814300683?label=discord&logo=discord&style=flat-square&color=7289da)](https://bittu.dev/discord)
-[![API](https://img.shields.io/badge/API-Return%20YouTube%20Dislike-red?style=flat-square)](https://returnyoutubedislike.com)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue?style=flat-square)](https://github.com/Bittu5134/RatioYT/blob/main/LICENSE)
 
 <br>
 
-<img src="./assets/screenshot.png" alt="RatioYT on YouTube" width="850">
 
 </div>
 
