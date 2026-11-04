@@ -394,40 +394,78 @@ button:focus-visible {
   white-space: nowrap;
 }
 
-/* ── Install ── */
+/* ── Install section (Extension.js squircle badge cluster) ── */
 
-.install-panel {
+.install-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.install-icons {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 28px;
+  justify-content: center;
+  gap: 16px;
   flex-wrap: wrap;
-  background: var(--surface);
-  border: var(--bw) dashed var(--line-strong);
-  border-radius: var(--r-lg);
-  padding: 26px 28px;
+  margin-bottom: 32px;
+  max-width: 600px;
 }
 
-.install-platforms {
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--text);
-  margin-bottom: 8px;
-}
-
-.install-note {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--muted);
-  max-width: 46ch;
-}
-
-.install-actions {
-  display: flex;
+.browser-badge {
+  width: 76px;
+  height: 76px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  justify-content: center;
+  padding: 14px;
+  box-sizing: border-box;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  transition:
+    transform 160ms cubic-bezier(.34, 1.56, .64, 1),
+    border-color 140ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.browser-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.browser-badge:hover {
+  transform: translateY(-6px) scale(1.08);
+  border-color: var(--blue);
+  box-shadow: 0 10px 28px rgba(156, 204, 255, 0.3);
+}
+
+.browser-badge:active {
+  transform: scale(0.96);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-center .section-title {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.text-center .section-desc {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.install-meta {
+  margin-top: 24px;
 }
 
 /* ── FAQ ── */
@@ -540,16 +578,14 @@ button:focus-visible {
     display: none;
   }
 
-  .install-panel {
-    padding: 22px;
+  .install-icons {
+    gap: 12px;
   }
 
-  .install-actions {
-    width: 100%;
-  }
-
-  .install-actions .btn {
-    flex: 1;
+  .browser-badge {
+    width: 64px;
+    height: 64px;
+    padding: 12px;
   }
 
   .footer-content {
