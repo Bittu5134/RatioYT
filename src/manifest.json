@@ -27,7 +27,9 @@
   "content_scripts": [
     {
       "matches": [
-        "https://*.youtube.com/*"
+        "https://*.youtube.com/*",
+        "https://ratioyt.bittu.dev/popup/*",
+        "https://ratioyt.bittu.dev/popup"
       ],
       "js": [
         "content/script.js"

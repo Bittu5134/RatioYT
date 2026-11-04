@@ -42,7 +42,11 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
@@ -56,6 +60,8 @@ body {
 /* ── Wrapper ── */
 
 .popup {
+  width: 320px;
+  max-width: 100%;
   padding: 12px 12px 10px;
   display: flex;
   flex-direction: column;
@@ -68,6 +74,38 @@ body {
   display: flex;
   align-items: center;
   gap: 11px;
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.connection-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 2px 7px;
+  border-radius: var(--r-xs);
+  background: var(--surface-2);
+  color: var(--dim);
+  border: 1px solid var(--line);
+  line-height: 1.2;
+}
+
+.connection-badge.connected-ext {
+  color: var(--green);
+  border-color: rgba(85, 255, 127, 0.4);
+  background: rgba(85, 255, 127, 0.08);
+}
+
+.connection-badge.connected-user {
+  color: var(--yellow);
+  border-color: rgba(255, 210, 63, 0.4);
+  background: rgba(255, 210, 63, 0.08);
 }
 
 .logo {

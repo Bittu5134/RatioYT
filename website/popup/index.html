@@ -3,39 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RatioYT Preview</title>
+  <title>RatioYT Settings</title>
+  <link rel="icon" type="image/png" href="../logo.png">
   <link rel="stylesheet" href="./style.css">
-  <script>
-    if (!window.chrome || !chrome.storage) {
-      const mem = {
-        scoringSystem: "percentage",
-        scoringColour: true,
-        hideOnlyMode: false,
-        hideLowScore: true,
-        lowScoreThreshold: 35,
-      };
-      window.chrome = {
-        storage: {
-          local: {
-            get: (defaults, cb) => {
-              try {
-                const saved = JSON.parse(localStorage.getItem("ratioyt_demo") || "{}");
-                cb({ ...defaults, ...mem, ...saved });
-              } catch (_) {
-                cb({ ...defaults, ...mem });
-              }
-            },
-            set: (items) => {
-              Object.assign(mem, items);
-              try {
-                localStorage.setItem("ratioyt_demo", JSON.stringify(mem));
-              } catch (_) {}
-            },
-          },
-        },
-      };
-    }
-  </script>
 </head>
 <body>
   <div class="popup">
@@ -43,7 +13,10 @@
     <header class="header">
       <img class="logo" src="../logo.png" height="34" alt="RatioYT">
       <div>
-        <h1>RatioYT</h1>
+        <div class="header-title-row">
+          <h1>RatioYT</h1>
+          <span id="connectionBadge" class="connection-badge">Preview</span>
+        </div>
         <p class="subtitle">like/dislike scores for YouTube</p>
       </div>
     </header>
