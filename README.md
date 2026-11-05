@@ -44,6 +44,31 @@
 - **7-day local cache** — Ratings are stored in your browser's IndexedDB, so repeat visits don't hit the network.
 - **Open source, no tracking** — Free software under GPL-3.0. Zero analytics, no accounts, and no telemetry.
 
+## Showcase
+
+<div align="center">
+
+### Star Ratings Format
+Ratings displayed as 5-star badges directly on YouTube video cards:
+
+<img src="assets/showcase-stars.png" alt="Star ratings on YouTube video cards" width="100%">
+
+<br><br>
+
+### Percentage Badges Format
+Live like/dislike ratios displayed as percentage badges with dynamic color grading:
+
+<img src="assets/showcase-percentage.png" alt="Percentage badges on YouTube video cards" width="100%">
+
+<br><br>
+
+### Settings & Clickbait Threshold Filter
+Configure rating styles, color grading, and threshold sliders to filter low-rated videos:
+
+<img src="assets/showcase-settings.png" alt="RatioYT Extension Settings and Clickbait Threshold Filter" width="100%">
+
+</div>
+
 ## Settings
 
 Settings can be customized directly in the extension popup or via the web dashboard at [ratioyt.bittu.dev/popup](https://ratioyt.bittu.dev/popup/):
