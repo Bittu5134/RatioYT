@@ -3,7 +3,7 @@
   "manifest_version": 3,
   "version": "1.1.0",
   "name": "RatioYT",
-  "description": "Adds like/dislike ratio to YouTube videos.",
+  "description": "Rates YouTube videos and filters videos with low ratings.",
   "homepage_url": "https://ratioyt.bittu.dev",
   "icons": {
     "16": "images/icon-16.png",

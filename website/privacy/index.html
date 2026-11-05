@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - RatioYT</title>
+  <meta name="description"
+    content="RatioYT Privacy Policy: zero telemetry, zero personal data collection, on-device caching, and open source under GPL-3.0.">
+  <link rel="icon" type="image/png" href="../logo.png">
+  <link rel="stylesheet" href="../style.css">
+
+  <!-- OpenGraph / Social Meta Tags -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="RatioYT Privacy Policy">
+  <meta property="og:description"
+    content="RatioYT Privacy Policy: zero telemetry, zero personal data collection, on-device caching, and open source under GPL-3.0.">
+  <meta property="og:url" content="https://ratioyt.bittu.dev/privacy">
+  <meta property="og:image" content="https://ratioyt.bittu.dev/logo.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="RatioYT Privacy Policy">
+  <meta name="twitter:description"
+    content="RatioYT Privacy Policy: zero telemetry, zero personal data collection, on-device caching, and open source under GPL-3.0.">
+  <meta name="twitter:image" content="https://ratioyt.bittu.dev/logo.png">
+</head>
+
+<body>
+
+  <div id="wrapper">
+
+    <!-- Brand Header -->
+    <header id="header">
+      <div id="logo">
+        <a href="../">
+          <img src="../logo.png" alt="RatioYT Logo">
+          <h1>RatioYT</h1>
+        </a>
+      </div>
+
+      <nav class="nav_bar" aria-label="Main navigation">
+        <a href="../">Home</a>
+        <a href="../#install">Install</a>
+        <a href="../#features">Features</a>
+        <a href="./" class="active">Privacy</a>
+        <a href="https://github.com/Bittu5134/RatioYT" target="_blank" rel="noopener">Source</a>
+      </nav>
+
+      <h2 class="title">
+        Privacy Policy
+      </h2>
+    </header>
+
+    <!-- Privacy Policy Section -->
+    <section class="section-block">
+      <h3>Overview</h3>
+      <p style="color: var(--text-muted); margin-bottom: 24px;">
+        RatioYT is designed with privacy as a foundational principle. We believe browser extensions should respect user agency, minimise network footprints, and operate without tracking, analytics, or data harvesting.
+      </p>
+
+      <ul class="clear">
+        <li>
+          <strong>Zero Telemetry &amp; No Personal Data</strong> <span class="arrow">&#8594;</span>
+          RatioYT does not collect, log, store, or transmit any personally identifiable information, browsing history, keystrokes, mouse events, accounts, or analytics. There are no tracking scripts, third-party cookies, or analytics SDKs anywhere in the extension or userscript.
+        </li>
+        <li>
+          <strong>Network Requests</strong> <span class="arrow">&#8594;</span>
+          RatioYT makes outbound network requests exclusively to two public endpoints:
+          <br><br>
+          (1) <strong>Return YouTube Dislike API</strong> (<code>https://returnyoutubedislikeapi.com/</code>) — Public queries containing only the YouTube video ID to fetch public like/dislike counts. No user accounts or personal metadata are attached to these calls.
+          <br><br>
+          (2) <strong>RatioYT Config</strong> (<code>https://ratioyt.bittu.dev/selectors.json</code>) — Retrieves updated YouTube DOM selector strings to ensure badges continue displaying if YouTube alters its HTML markup. No user data is sent.
+        </li>
+        <li>
+          <strong>On-Device Local Storage</strong> <span class="arrow">&#8594;</span>
+          Ratings are cached locally in your browser's IndexedDB for up to 7 days so repeated video views skip the network entirely. Display preferences (format, color, score threshold, filter-only mode) are saved strictly inside your browser's local extension storage.
+        </li>
+        <li>
+          <strong>No Data Sharing or Monetisation</strong> <span class="arrow">&#8594;</span>
+          We do not sell, rent, trade, or transfer any user data to any third parties. We do not use data to profile users, determine creditworthiness, serve ads, or engage in lending.
+        </li>
+        <li>
+          <strong>Open Source &amp; Auditable</strong> <span class="arrow">&#8594;</span>
+          RatioYT is 100% free software licensed under <a href="https://github.com/Bittu5134/RatioYT/blob/main/LICENSE" target="_blank" rel="noopener">GPL-3.0-or-later</a>. The complete source code is public and fully auditable on <a href="https://github.com/Bittu5134/RatioYT" target="_blank" rel="noopener">GitHub</a>.
+        </li>
+      </ul>
+    </section>
+
+    <!-- Contact & Questions -->
+    <section class="section-block">
+      <h3>Questions &amp; Contact</h3>
+      <p style="color: var(--text-muted);">
+        If you have questions about this Privacy Policy or wish to report an issue, feel free to open a ticket on <a href="https://github.com/Bittu5134/RatioYT/issues" target="_blank" rel="noopener">GitHub Issues</a> or reach out directly at <code>hello@bittu.dev</code>.
+      </p>
+    </section>
+
+    <!-- Footer -->
+    <footer id="footer">
+      <p>
+        RatioYT v1.1.0 · Free software under <a href="https://github.com/Bittu5134/RatioYT/blob/main/LICENSE" target="_blank"
+          rel="noopener">GPL-3.0</a> · by <a href="https://bittu.dev" target="_blank" rel="noopener">Bittu</a>
+      </p>
+      <div class="footer-nav">
+        <a href="https://github.com/Bittu5134/RatioYT" target="_blank" rel="noopener">GitHub</a>
+        <a href="../ratioyt.user.js">Userscript</a>
+        <a href="./">Privacy</a>
+        <a href="https://github.com/Bittu5134/RatioYT/issues" target="_blank" rel="noopener">Issues</a>
+        <a href="https://bittu.dev/discord" target="_blank" rel="noopener">Discord</a>
+        <a href="https://returnyoutubedislike.com" target="_blank" rel="noopener">RYD API</a>
+      </div>
+    </footer>
+
+  </div>
+
+</body>
+
+</html>

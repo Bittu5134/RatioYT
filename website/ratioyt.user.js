@@ -2,7 +2,7 @@
 // @name         RatioYT - YouTube Like/Dislike Ratio
 // @namespace    https://ratioyt.bittu.dev/
 // @version      1.1.0
-// @description  Cross-browser extension that shows like/dislike ratio scores on YouTube video cards.
+// @description  Brings like/dislike ratios back to YouTube video cards and filters low-rated videos.
 // @author       Bittu
 // @homepageURL  https://ratioyt.bittu.dev
 // @supportURL   https://github.com/Bittu5134/RatioYT/issues
