@@ -342,12 +342,25 @@ function initRatioYT({ platform, selectors }) {
       .ratioyt-row {
         display: block !important;
         margin-top: 2px !important;
+        font-size: 1.2rem !important;
+        line-height: 1.8rem !important;
       }
       .ratioyt-badge {
-        font-size: inherit;
+        font-size: 1.2rem !important;
+        line-height: 1.8rem !important;
+        font-weight: 500 !important;
+        letter-spacing: normal !important;
+        vertical-align: baseline !important;
+      }
+      .ratioyt-badge.ratioyt-smiley {
+        font-size: 1.35rem !important;
+        vertical-align: -1px !important;
       }
       .ratioyt-delimiter {
+        font-size: 1.2rem !important;
+        line-height: 1.8rem !important;
         opacity: 0.6;
+        vertical-align: baseline !important;
       }
     `;
     (document.head || document.documentElement).appendChild(style);
@@ -584,9 +597,11 @@ function initRatioYT({ platform, selectors }) {
 
     if (!badge) {
       badge = document.createElement("span");
-      badge.className = "ratioyt-badge";
+      badge.className =
+        "ytAttributedStringHost ytContentMetadataViewModelMetadataText inline-metadata-item ratioyt-badge";
       const delimiter = document.createElement("span");
-      delimiter.className = "ratioyt-delimiter";
+      delimiter.className =
+        "ytContentMetadataViewModelDelimiter ratioyt-delimiter";
       delimiter.textContent = " • ";
       targetRow.appendChild(delimiter);
       targetRow.appendChild(badge);
@@ -672,8 +687,10 @@ function initRatioYT({ platform, selectors }) {
     }
 
     if (userSettings.scoringSystem === "stars") {
+      badge.classList.remove("ratioyt-smiley");
       badge.innerHTML = renderStarSvgs(score);
     } else {
+      badge.classList.toggle("ratioyt-smiley", userSettings.scoringSystem === "smiley");
       badge.textContent = formatScoreText(score, userSettings.scoringSystem);
     }
 
