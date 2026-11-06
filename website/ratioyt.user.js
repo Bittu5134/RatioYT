@@ -537,23 +537,56 @@ function initRatioYT({ platform, selectors }) {
 
   const STAR_PATH =
     "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z";
-  const STAR_SVG = {
-    full: `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="${STAR_PATH}"/></svg>`,
-    half: `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12"><path d="${STAR_PATH}" fill="currentColor" opacity="0.25"/><path d="M12 2v15.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/></svg>`,
-    empty: `<svg class="ratioyt-star" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" opacity="0.25"><path d="${STAR_PATH}"/></svg>`,
-  };
+  const SVG_NS = "http://www.w3.org/2000/svg";
 
-  function renderStarSvgs(score) {
+  // Stars are built as DOM nodes rather than an HTML string so nothing is ever
+  // assigned through innerHTML - AMO flags that as an unsanitised sink even
+  // when the value is a local constant.
+  function createStarSvg(kind) {
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("class", "ratioyt-star");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("width", "12");
+    svg.setAttribute("height", "12");
+
+    if (kind === "empty") svg.setAttribute("opacity", "0.25");
+    if (kind !== "half") svg.setAttribute("fill", "currentColor");
+
+    if (kind === "half") {
+      const backdrop = document.createElementNS(SVG_NS, "path");
+      backdrop.setAttribute("d", STAR_PATH);
+      backdrop.setAttribute("fill", "currentColor");
+      backdrop.setAttribute("opacity", "0.25");
+      svg.appendChild(backdrop);
+
+      const filled = document.createElementNS(SVG_NS, "path");
+      filled.setAttribute("d", "M12 2v15.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z");
+      filled.setAttribute("fill", "currentColor");
+      svg.appendChild(filled);
+      return svg;
+    }
+
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", STAR_PATH);
+    svg.appendChild(path);
+    return svg;
+  }
+
+  function renderStars(score) {
     const rating = Math.max(0, Math.min(5, Math.round((score / 100) * 10) / 2));
     const full = Math.floor(rating);
     const hasHalf = rating % 1 !== 0;
+    const empty = 5 - full - (hasHalf ? 1 : 0);
 
-    let html = `<span class="ratioyt-stars-wrap" title="${rating} / 5 stars (${score}%)">`;
-    html += STAR_SVG.full.repeat(full);
-    if (hasHalf) html += STAR_SVG.half;
-    html += STAR_SVG.empty.repeat(5 - full - (hasHalf ? 1 : 0));
-    html += `</span>`;
-    return html;
+    const wrap = document.createElement("span");
+    wrap.className = "ratioyt-stars-wrap";
+    wrap.title = `${rating} / 5 stars (${score}%)`;
+
+    for (let i = 0; i < full; i++) wrap.appendChild(createStarSvg("full"));
+    if (hasHalf) wrap.appendChild(createStarSvg("half"));
+    for (let i = 0; i < empty; i++) wrap.appendChild(createStarSvg("empty"));
+
+    return wrap;
   }
 
   function formatScoreText(score, format) {
@@ -688,7 +721,7 @@ function initRatioYT({ platform, selectors }) {
 
     if (userSettings.scoringSystem === "stars") {
       badge.classList.remove("ratioyt-smiley");
-      badge.innerHTML = renderStarSvgs(score);
+      badge.replaceChildren(renderStars(score));
     } else {
       badge.classList.toggle("ratioyt-smiley", userSettings.scoringSystem === "smiley");
       badge.textContent = formatScoreText(score, userSettings.scoringSystem);
