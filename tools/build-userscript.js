@@ -13,13 +13,15 @@ const coreJs = fs.readFileSync(path.join(ROOT, "src/core/index.js"), "utf8");
 const userscriptPlatformJs = fs.readFileSync(path.join(ROOT, "src/platform/userscript.js"), "utf8");
 
 const authorName = typeof pkg.author === "object" ? pkg.author.name : pkg.author || "Bittu";
+const authorEmail = typeof pkg.author === "object" ? pkg.author.email : "";
+const authorLine = authorEmail ? `${authorName} <${authorEmail}>` : authorName;
 
 const metadataHeader = `// ==UserScript==
 // @name         RatioYT - YouTube Like/Dislike Ratio
 // @namespace    https://ratioyt.bittu.dev/
 // @version      ${pkg.version}
 // @description  ${pkg.description || "Shows like/dislike ratio scores on YouTube video cards and filters low-rated videos."}
-// @author       ${authorName}
+// @author       ${authorLine}
 // @homepageURL  https://ratioyt.bittu.dev
 // @supportURL   https://github.com/Bittu5134/RatioYT/issues
 // @match        https://*.youtube.com/*

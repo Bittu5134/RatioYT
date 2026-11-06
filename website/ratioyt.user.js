@@ -3,7 +3,7 @@
 // @namespace    https://ratioyt.bittu.dev/
 // @version      1.1.0
 // @description  Brings like/dislike ratios back to YouTube video cards and filters low-rated videos.
-// @author       Bittu
+// @author       Bittu <hello@bittu.dev>
 // @homepageURL  https://ratioyt.bittu.dev
 // @supportURL   https://github.com/Bittu5134/RatioYT/issues
 // @match        https://*.youtube.com/*
