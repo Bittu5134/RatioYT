@@ -1,4 +1,4 @@
-name: Build extension packages
+name: Build Extensions
 
 on:
   workflow_dispatch:
