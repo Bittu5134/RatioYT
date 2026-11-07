@@ -1,22 +1,39 @@
 <div align="center">
 
-[![logo](./assets/promo-small.jpg)](https://github.com/Bittu5134/RatioYT/releases)
+[![logo](./assets/promo-small.jpg)](https://ratioyt.bittu.dev/)
 
-### A lightweight browser extension that rates YouTube videos and filters videos with low ratings
+[![Discord](https://img.shields.io/discord/877508637814300683?logo=discord&logoColor=white)](https://bittu.dev/discord)
+[![release version](https://img.shields.io/github/v/release/Bittu5134/RatioYT?label=Version&logo=googlechrome&logoColor=white)](https://github.com/Bittu5134/RatioYT/releases)
+[![Patreon](https://img.shields.io/badge/Patreon-LazyBittu-F96854?logo=patreon&logoColor=white)](https://www.patreon.com/cw/LazyBittu)
+
+### A lightweight browser extension that rates YouTube videos and filters videos with low ratings. Read more at [ratioyt.bittu.dev](https://ratioyt.bittu.dev/)
 
 </div>
 
 ## Install
 
-RatioYT is available as a browser extension or a userscript. Pick your platform:
+<div class="install-icons" align="center">
+        <a href="https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm" target="_blank" rel="noopener" aria-label="Chrome Web Store" title="Chrome Web Store">
+                <img src="./website/images/chrome.svg" width="100" height="100" alt="Chrome">
+        </a>
+        <a href="https://addons.mozilla.org/en-US/firefox/addon/ratioyt/" target="_blank" rel="noopener" aria-label="Firefox Add-ons" title="Firefox Add-ons">
+                <img src="./website/images/firefox.svg" width="100" height="100" alt="Firefox">
+        </a>
+        <a href="https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm" target="_blank" rel="noopener" aria-label="Brave (Chrome Web Store)" title="Brave">
+                <img src="./website/images/brave.svg" width="100" height="100" alt="Brave">
+        </a>
+        <a href="https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm" target="_blank" rel="noopener" aria-label="Microsoft Edge Add-ons" title="Edge">
+                <img src="./website/images/edge.svg" width="100" height="100" alt="Microsoft Edge">
+        </a>
+        <a href="./ratioyt.user.js" aria-label="Userscript (Tampermonkey / Violentmonkey)" title="Userscript (Tampermonkey / Violentmonkey)">
+                <img src="./website/images/tampermonkey.svg" width="100" height="100" alt="Tampermonkey">
+        </a>
+</div>
 
-- **Chrome:** [Chrome Web Store](https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm)
-- **Firefox:** [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/ratioyt/)
-- **Brave:** [Chrome Web Store](https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm)
-- **Microsoft Edge:** [Chrome Web Store](https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm)
-- **Userscript (Tampermonkey / Violentmonkey):** [ratioyt.user.js](https://ratioyt.bittu.dev/ratioyt.user.js)
-
-Source builds are available on [GitHub Releases](https://github.com/Bittu5134/RatioYT/releases).
+<p class="install-note">
+        <strong>Pick your platform</strong>. Available as a browser extension or userscript. Source builds on <a href="https://github.com/Bittu5134/RatioYT/releases" target="_blank" rel="noopener">GitHub
+          Releases</a>.
+      </p>
 
 ## Features
 
@@ -30,12 +47,9 @@ Source builds are available on [GitHub Releases](https://github.com/Bittu5134/Ra
 
 ## Contact
 
-- **Discord:** [bittu.dev/discord](https://bittu.dev/discord)
+- **Potifolio:** [bittu.dev](https://bittu.dev/)
 - **Email:** [hello@bittu.dev](mailto:hello@bittu.dev)
-- **GitHub:** [Bittu5134/RatioYT](https://github.com/Bittu5134/RatioYT)
-- **Patreon:** [LazyBittu](https://www.patreon.com/cw/LazyBittu)
-
-## Support
+- **Discord:** [bittu.dev/discord](https://bittu.dev/discord)
 
 If RatioYT is useful to you, you can support development on [Patreon](https://www.patreon.com/cw/LazyBittu).
 
