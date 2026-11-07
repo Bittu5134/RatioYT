@@ -25,7 +25,7 @@
         <a href="https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm" target="_blank" rel="noopener" aria-label="Microsoft Edge Add-ons" title="Edge">
                 <img src="./website/images/edge.svg" width="100" height="100" alt="Microsoft Edge">
         </a>
-        <a href="./ratioyt.user.js" aria-label="Userscript (Tampermonkey / Violentmonkey)" title="Userscript (Tampermonkey / Violentmonkey)">
+        <a href="https://ratioyt.bittu.dev/ratioyt.user.js"" aria-label="Userscript (Tampermonkey / Violentmonkey)" title="Userscript (Tampermonkey / Violentmonkey)">
                 <img src="./website/images/tampermonkey.svg" width="100" height="100" alt="Tampermonkey">
         </a>
 </div>
