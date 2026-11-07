@@ -1,0 +1,120 @@
+name: Build extension packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag (defaults to v<version> from package.json)
+        required: false
+        type: string
+      prerelease:
+        description: Mark the release as a pre-release
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Build zips and publish release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extensions
+        run: |
+          npm run build
+          npm run build:firefox
+
+      - name: Package zips
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          tag="${INPUT_TAG:-v$version}"
+
+          cd dist/chrome
+          zip -r -X "../ratioyt-${version}-chrome.zip" . > /dev/null
+          cd ../firefox
+          zip -r -X "../ratioyt-${version}-firefox.zip" . > /dev/null
+          cd ..
+
+          ls -lh ratioyt-*.zip
+
+          {
+            echo "VERSION=$version"
+            echo "TAG=$tag"
+            echo "CHROME_ZIP=dist/ratioyt-${version}-chrome.zip"
+            echo "FIREFOX_ZIP=dist/ratioyt-${version}-firefox.zip"
+          } >> "$GITHUB_ENV"
+
+      - name: Verify packages
+        run: |
+          for pkg in "$CHROME_ZIP" "$FIREFOX_ZIP"; do
+            # The manifest has to sit at the zip root or the stores reject it.
+            if ! unzip -Z1 "$pkg" | grep -qx "manifest.json"; then
+              echo "::error::manifest.json is not at the root of $pkg"
+              exit 1
+            fi
+            echo "ok: $pkg ($(unzip -Z1 "$pkg" | wc -l) files)"
+          done
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ratioyt-${{ env.VERSION }}
+          path: |
+            ${{ env.CHROME_ZIP }}
+            ${{ env.FIREFOX_ZIP }}
+          if-no-files-found: error
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          notes_file="$RUNNER_TEMP/release-notes.md"
+          cat > "$notes_file" <<EOF
+          RatioYT ${VERSION} — browser packages for manual install.
+
+          | Platform | File |
+          | --- | --- |
+          | Chrome, Edge, Brave, Opera | \`ratioyt-${VERSION}-chrome.zip\` |
+          | Firefox | \`ratioyt-${VERSION}-firefox.zip\` |
+
+          The regular install paths are the [Chrome Web Store](https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm) and [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/ratioyt/). The zips are for loading the extension unpacked, e.g. \`chrome://extensions\` → Developer mode → Load unpacked, or \`about:debugging\` → This Firefox → Load Temporary Add-on.
+
+          Full changelog: https://github.com/Bittu5134/RatioYT/commits/main
+          EOF
+
+          flags=()
+          if [ "$PRERELEASE" = "true" ]; then
+            flags+=(--prerelease)
+          fi
+
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists, updating assets and notes."
+            gh release upload "$TAG" "$CHROME_ZIP" "$FIREFOX_ZIP" --clobber
+            gh release edit "$TAG" --notes-file "$notes_file" "${flags[@]}"
+          else
+            gh release create "$TAG" "$CHROME_ZIP" "$FIREFOX_ZIP" \
+              --target "$GITHUB_SHA" \
+              --title "RatioYT $VERSION" \
+              --notes-file "$notes_file" \
+              "${flags[@]}"
+          fi
