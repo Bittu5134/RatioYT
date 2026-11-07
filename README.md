@@ -1,16 +1,28 @@
+<div align="center">
+
 # RatioYT
 
 A lightweight browser extension and userscript that brings like/dislike ratios back to YouTube video cards and filters out low-rated videos.
 
+[![Version](https://img.shields.io/github/package-json/v/Bittu5134/RatioYT?label=version&color=2EA44F)](https://github.com/Bittu5134/RatioYT/releases)
+[![License](https://img.shields.io/github/license/Bittu5134/RatioYT?color=2EA44F)](https://github.com/Bittu5134/RatioYT/blob/main/LICENSE)
+[![Manifest V3](https://img.shields.io/badge/manifest-v3-4285F4?logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3)
+
+<br>
+
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-install-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm)
+[![Firefox Add-ons](https://img.shields.io/badge/Firefox%20Add--ons-install-FF7139?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/en-US/firefox/addon/ratioyt/)
+[![Userscript](https://img.shields.io/badge/Userscript-install-2EA44F?style=for-the-badge&logo=tampermonkey&logoColor=white)](https://ratioyt.bittu.dev/ratioyt.user.js)
+
+</div>
+
 ## Install
 
-RatioYT is available as a browser extension or a userscript. Pick your platform:
+RatioYT runs as a browser extension or a standalone userscript.
 
-- **Chrome:** [Chrome Web Store](https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm)
-- **Firefox:** [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/ratioyt/)
-- **Brave:** [Chrome Web Store](https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm)
-- **Microsoft Edge:** [Chrome Web Store](https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm)
-- **Userscript (Tampermonkey / Violentmonkey):** [ratioyt.user.js](https://ratioyt.bittu.dev/ratioyt.user.js)
+- **Chromium browsers:** Chrome, Edge, Brave and Opera install from the [Chrome Web Store](https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm).
+- **Firefox:** install from [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/ratioyt/).
+- **Userscript:** install [ratioyt.user.js](https://ratioyt.bittu.dev/ratioyt.user.js) in Tampermonkey, Violentmonkey or Greasemonkey.
 
 Source builds are available on [GitHub Releases](https://github.com/Bittu5134/RatioYT/releases).
 
@@ -33,16 +45,18 @@ Source builds are available on [GitHub Releases](https://github.com/Bittu5134/Ra
 - **On-device storage:** Ratings are stored locally in your browser's IndexedDB for 7 days so repeat visits skip the network. User preferences stay in your browser's local storage.
 - **Open source:** RatioYT is free software under GPL-3.0. Read the full [Privacy Policy](https://ratioyt.bittu.dev/privacy/) or inspect the source on [GitHub](https://github.com/Bittu5134/RatioYT).
 
-## Contact
+## Support & Contact
 
-- **Discord:** [bittu.dev/discord](https://bittu.dev/discord)
-- **Email:** [hello@bittu.dev](mailto:hello@bittu.dev)
-- **GitHub:** [Bittu5134/RatioYT](https://github.com/Bittu5134/RatioYT)
-- **Patreon:** [LazyBittu](https://www.patreon.com/cw/LazyBittu)
+<div align="center">
 
-## Support
+[![Patreon](https://img.shields.io/badge/Patreon-support-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/cw/LazyBittu)
+[![Discord](https://img.shields.io/badge/Discord-join-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://bittu.dev/discord)
+[![Email](https://img.shields.io/badge/email-hello%40bittu.dev-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:hello@bittu.dev)
+[![GitHub](https://img.shields.io/badge/GitHub-Bittu5134-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Bittu5134/RatioYT)
 
-If RatioYT is useful to you, you can support development on [Patreon](https://www.patreon.com/cw/LazyBittu).
+</div>
+
+Bug reports and feature requests go to [GitHub Issues](https://github.com/Bittu5134/RatioYT/issues). If RatioYT is useful to you, you can support development on [Patreon](https://www.patreon.com/cw/LazyBittu).
 
 ## License
 
