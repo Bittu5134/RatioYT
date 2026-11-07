@@ -90,16 +90,16 @@ jobs:
         run: |
           notes_file="$RUNNER_TEMP/release-notes.md"
           cat > "$notes_file" <<EOF
-          RatioYT ${VERSION} — browser packages for manual install.
+          ## RatioYT ${VERSION}
 
-          | Platform | File |
-          | --- | --- |
-          | Chrome, Edge, Brave, Opera | \`ratioyt-${VERSION}-chrome.zip\` |
-          | Firefox | \`ratioyt-${VERSION}-firefox.zip\` |
+          Browser extension packages for manual installation.
 
-          The regular install paths are the [Chrome Web Store](https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm) and [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/ratioyt/). The zips are for loading the extension unpacked, e.g. \`chrome://extensions\` → Developer mode → Load unpacked, or \`about:debugging\` → This Firefox → Load Temporary Add-on.
+          - Chrome, Edge, Brave, Opera: \`ratioyt-${VERSION}-chrome.zip\`
+          - Firefox: \`ratioyt-${VERSION}-firefox.zip\`
 
-          Full changelog: https://github.com/Bittu5134/RatioYT/commits/main
+          Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/ratioyt/ibdoandiabkbigbpjmlgpmndndnjnjkm) or [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/ratioyt/).
+
+          [View the changelog](https://github.com/Bittu5134/RatioYT/commits/main)
           EOF
 
           flags=()
