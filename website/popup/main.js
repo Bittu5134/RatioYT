@@ -1,5 +1,6 @@
 const UI = {
   scoringSystem: document.getElementById("scoringSystem"),
+  weightedRating: document.getElementById("weightedRating"),
   scoringColour: document.getElementById("scoringColour"),
   hideOnlyMode: document.getElementById("hideOnlyMode"),
   hideLowScore: document.getElementById("hideLowScore"),
@@ -12,9 +13,10 @@ const UI = {
 const DEFAULTS = {
   scoringSystem: "likes",
   scoringColour: true,
+  weightedRating: true,
   hideOnlyMode: false,
   hideLowScore: false,
-  lowScoreThreshold: 25,
+  lowScoreThreshold: 20,
 };
 
 let currentSettings = { ...DEFAULTS };
@@ -23,6 +25,11 @@ let storageMode = "preview"; // "extension" | "userscript" | "preview"
 function applyToUI(config) {
   currentSettings = { ...currentSettings, ...config };
   UI.scoringSystem.value = currentSettings.scoringSystem;
+  if (UI.weightedRating) {
+    UI.weightedRating.checked = Boolean(
+      currentSettings.weightedRating ?? DEFAULTS.weightedRating
+    );
+  }
   UI.scoringColour.checked = currentSettings.scoringColour;
   UI.hideOnlyMode.checked = currentSettings.hideOnlyMode;
   UI.hideLowScore.checked = currentSettings.hideLowScore;
@@ -107,6 +114,9 @@ if (typeof chrome !== "undefined" && chrome?.storage?.local) {
 
 // Event listeners for user input
 UI.scoringSystem.addEventListener("change", (e) => save({ scoringSystem: e.target.value }));
+if (UI.weightedRating) {
+  UI.weightedRating.addEventListener("change", (e) => save({ weightedRating: e.target.checked }));
+}
 UI.scoringColour.addEventListener("change", (e) => save({ scoringColour: e.target.checked }));
 UI.hideOnlyMode.addEventListener("change", (e) => save({ hideOnlyMode: e.target.checked }));
 UI.hideLowScore.addEventListener("change", (e) => {

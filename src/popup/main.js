@@ -1,5 +1,6 @@
 const UI = {
   scoringSystem: document.getElementById("scoringSystem"),
+  weightedRating: document.getElementById("weightedRating"),
   scoringColour: document.getElementById("scoringColour"),
   hideOnlyMode: document.getElementById("hideOnlyMode"),
   hideLowScore: document.getElementById("hideLowScore"),
@@ -11,15 +12,17 @@ const UI = {
 const DEFAULTS = {
   scoringSystem: "likes",
   scoringColour: true,
+  weightedRating: true,
   hideOnlyMode: false,
   hideLowScore: false,
-  lowScoreThreshold: 25,
+  lowScoreThreshold: 20,
 };
 
 const save = (settings) => chrome.storage.local.set(settings);
 
 chrome.storage.local.get(DEFAULTS, (config) => {
   UI.scoringSystem.value = config.scoringSystem;
+  UI.weightedRating.checked = Boolean(config.weightedRating ?? DEFAULTS.weightedRating);
   UI.scoringColour.checked = config.scoringColour;
   UI.hideOnlyMode.checked = config.hideOnlyMode;
   UI.hideLowScore.checked = config.hideLowScore;
@@ -29,6 +32,8 @@ chrome.storage.local.get(DEFAULTS, (config) => {
 });
 
 UI.scoringSystem.addEventListener("change", (e) => save({ scoringSystem: e.target.value }));
+
+UI.weightedRating.addEventListener("change", (e) => save({ weightedRating: e.target.checked }));
 
 UI.scoringColour.addEventListener("change", (e) => save({ scoringColour: e.target.checked }));
 
