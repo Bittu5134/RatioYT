@@ -297,6 +297,16 @@ function initRatioYT({ platform, selectors }) {
   const MIN_FETCH_GAP_MS = 300;
   const SMILEY_GOOD = 70;
   const SMILEY_MEH = 40;
+  // Filled face with the eyes and mouth punched out via fill-rule, so the
+  // features show the page background instead of needing a second colour
+  const SMILEY_FACE = "M12 1.5a10.5 10.5 0 1 1 0 21a10.5 10.5 0 1 1 0-21";
+  const SMILEY_EYES =
+    "M8.6 7.8a1.6 1.6 0 1 1 0 3.2a1.6 1.6 0 1 1 0-3.2M15.4 7.8a1.6 1.6 0 1 1 0 3.2a1.6 1.6 0 1 1 0-3.2";
+  const SMILEY_MOUTHS = {
+    good: "M6.8 14.3a8 8 0 0 0 10.4 0a5.6 5.6 0 0 1-10.4 0Z",
+    meh: "M7 14.4h10v1.8H7Z",
+    bad: "M6.8 17.4a8 8 0 0 1 10.4 0a5.6 5.6 0 0 0-10.4 0Z",
+  };
 
   const DB_NAME = platform.dbName || "RatioYT";
   const DB_STORE = "scores";
@@ -362,9 +372,10 @@ function initRatioYT({ platform, selectors }) {
         letter-spacing: normal !important;
         vertical-align: baseline !important;
       }
-      .ratioyt-badge.ratioyt-smiley {
-        font-size: 1.35rem !important;
-        vertical-align: -1px !important;
+      .ratioyt-badge-svg {
+        display: inline-flex !important;
+        align-items: center !important;
+        vertical-align: -3px !important;
       }
       .ratioyt-delimiter {
         font-size: 1.2rem !important;
@@ -632,12 +643,37 @@ function initRatioYT({ platform, selectors }) {
     return wrap;
   }
 
+  function renderSmiley(score) {
+    const mouth =
+      score >= SMILEY_GOOD
+        ? SMILEY_MOUTHS.good
+        : score >= SMILEY_MEH
+          ? SMILEY_MOUTHS.meh
+          : SMILEY_MOUTHS.bad;
+
+    const wrap = document.createElement("span");
+    wrap.className = "ratioyt-badge-svg";
+    wrap.title = `${score}%`;
+
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("width", "16");
+    svg.setAttribute("height", "16");
+
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("fill", "currentColor");
+    path.setAttribute("fill-rule", "evenodd");
+    path.setAttribute("d", `${SMILEY_FACE}${SMILEY_EYES}${mouth}`);
+    svg.appendChild(path);
+
+    wrap.appendChild(svg);
+    return wrap;
+  }
+
   function formatScoreText(score, format) {
     switch (format) {
       case "decimal":
         return `${Math.round(score / 10)}/10`;
-      case "smiley":
-        return score >= SMILEY_GOOD ? "😊" : score >= SMILEY_MEH ? "😐" : "😞";
       case "percentage":
       default:
         return `${score}%`;
@@ -765,15 +801,16 @@ function initRatioYT({ platform, selectors }) {
       return;
     }
 
+    badge.classList.remove("ratioyt-smiley");
+
     if (userSettings.scoringSystem === "stars") {
-      badge.classList.remove("ratioyt-smiley");
       badge.replaceChildren(renderStars(score));
-    } else if (userSettings.scoringSystem === "likes") {
-      badge.classList.remove("ratioyt-smiley");
-      badge.replaceChildren(renderLikes(badge.dataset.ratioytLikes));
-    } else {
-      badge.classList.toggle("ratioyt-smiley", userSettings.scoringSystem === "smiley");
+    } else if (userSettings.scoringSystem === "smiley") {
+      badge.replaceChildren(renderSmiley(score));
+    } else if (["percentage", "decimal"].includes(userSettings.scoringSystem)) {
       badge.textContent = formatScoreText(score, userSettings.scoringSystem);
+    } else {
+      badge.replaceChildren(renderLikes(badge.dataset.ratioytLikes));
     }
 
     badge.style.color = userSettings.scoringColour
