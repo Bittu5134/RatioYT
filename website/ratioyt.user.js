@@ -814,7 +814,7 @@ function initRatioYT({ platform, selectors }) {
     }
 
     badge.style.color = userSettings.scoringColour
-      ? `hsl(${score * 1.2}, 100%, 45%)`
+      ? `hsl(${score * 1.2}, 55%, 45%)`
       : "";
     ensureBadgeFits(badge);
   }
