@@ -39,7 +39,6 @@ jobs:
       - name: Build extensions
         run: |
           npm run build
-          npm run build:firefox
 
       - name: Package zips
         env:
