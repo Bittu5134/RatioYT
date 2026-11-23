@@ -858,12 +858,15 @@ function initRatioYT({ platform, selectors }) {
     if (!votes || votes.deleted || (votes.likes === undefined && votes.dislikes === undefined)) {
       return { score: -1 };
     }
-    const likes = votes.likes ?? 0;
-    const dislikes = votes.dislikes ?? 0;
+    // Use whichever counts RTD has: the estimates, else the raw extension votes
+    let likes = votes.likes ?? 0;
+    let dislikes = votes.dislikes ?? 0;
+    if (likes + dislikes === 0) {
+      likes = votes.rawLikes ?? 0;
+      dislikes = votes.rawDislikes ?? 0;
+    }
     const total = likes + dislikes;
-    // Only trust the estimates when they exist and something was actually measured
     if (total === 0) return { score: -1 };
-    if ((votes.rawLikes ?? 0) === 0) return { score: -1 };
     return { score: Math.round((likes / total) * 100), likes };
   }
 
