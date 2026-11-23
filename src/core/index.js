@@ -637,7 +637,7 @@ export function initRatioYT({ platform, selectors }) {
     // Use whichever counts RTD has: the estimates, else the raw extension votes
     let likes = votes.likes ?? 0;
     let dislikes = votes.dislikes ?? 0;
-    if (likes + dislikes === 0) {
+    if (likes + dislikes === 0 || (likes === 0 && (votes.rawLikes ?? 0) > 0)) {
       likes = votes.rawLikes ?? 0;
       dislikes = votes.rawDislikes ?? 0;
     }
