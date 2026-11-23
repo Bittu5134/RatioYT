@@ -38,8 +38,9 @@
 ## Features
 
 - **Like/dislike ratios on cards:** Shown on Home, Search, Shorts, and sidebar recommendations.
+- **Dynamic Ratings:** Adjusts score calculations to weight dislikes realistically, preventing almost every video from displaying as a 5-star rating.
 - **Hide clickbait by score:** Videos scoring below your chosen threshold are replaced with empty placeholders.
-- **Four rating formats:** Choose between Percentage (96%), 10-point (9.6/10), smileys (😊 😐 😞), or ★★★★★.
+- **Five rating formats:** Choose between Like count, Percentage (83%), 10-point (8.3/10), smileys (😊 😐 😞), or ★★★★☆.
 - **Filter Only Mode:** Keeps low-rated video filtering active while hiding the score badges from your feed.
 - **Customizable colouring:** Badge colour shifts with the score, so low and high ratings stand out at a glance.
 - **Lightweight:** Runs efficiently in the background without slowing down your browser.
@@ -47,7 +48,7 @@
 
 ## Contact
 
-- **Potifolio:** [bittu.dev](https://bittu.dev/)
+- **Portfolio:** [bittu.dev](https://bittu.dev/)
 - **Email:** [hello@bittu.dev](mailto:hello@bittu.dev)
 - **Discord:** [bittu.dev/discord](https://bittu.dev/discord)
 
