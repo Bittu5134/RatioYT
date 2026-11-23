@@ -26,9 +26,9 @@
     "dev": "extension dev --browser=chrome",
     "preview": "extension preview --browser=chrome",
     "build": "npm run build:chrome && npm run build:firefox",
-    "build:chrome": "extension build --browser chrome",
-    "build:firefox": "extension build --browser firefox",
-    "build:edge": "extension build --browser edge",
+    "build:chrome": "extension build --browser chrome --zip",
+    "build:firefox": "extension build --browser firefox --zip",
+    "build:edge": "extension build --browser edge --zip",
     "build:userscript": "node tools/build-userscript.js",
     "build:all": "npm run build && npm run build:userscript"
   },
