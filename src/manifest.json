@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/chrome-manifest.json",
   "manifest_version": 3,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "name": "RatioYT",
   "description": "Rates YouTube videos and filters videos with low ratings.",
   "homepage_url": "https://ratioyt.bittu.dev",

@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "ratioyt",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Brings like/dislike ratios back to YouTube video cards and filters low-rated videos.",
   "license": "GPL-3.0-or-later",
   "type": "module",

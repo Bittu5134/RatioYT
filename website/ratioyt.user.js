@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RatioYT - YouTube Like/Dislike Ratio
 // @namespace    https://ratioyt.bittu.dev/
-// @version      1.1.0
+// @version      1.2.0
 // @description  Brings like/dislike ratios back to YouTube video cards and filters low-rated videos.
 // @author       Bittu <hello@bittu.dev>
 // @homepageURL  https://ratioyt.bittu.dev
