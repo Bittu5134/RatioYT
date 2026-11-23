@@ -88,6 +88,11 @@ export function createUserscriptPlatform() {
             storage.set({ scoringSystem: next });
           });
         });
+        GM_registerMenuCommand("Score: Toggle Dynamic Ratings", () => {
+          storage.get(DEFAULTS, (cfg) => {
+            storage.set({ weightedRating: !cfg.weightedRating });
+          });
+        });
         GM_registerMenuCommand("Filter: Toggle Hide Clickbait", () => {
           storage.get(DEFAULTS, (cfg) => {
             storage.set({ hideLowScore: !cfg.hideLowScore });

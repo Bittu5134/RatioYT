@@ -1,9 +1,10 @@
 export const DEFAULTS = {
   scoringSystem: "likes",
   scoringColour: true,
+  weightedRating: true,
   hideOnlyMode: false,
   hideLowScore: false,
-  lowScoreThreshold: 25,
+  lowScoreThreshold: 20,
 };
 
 export function initRatioYT({ platform, selectors }) {
@@ -16,6 +17,7 @@ export function initRatioYT({ platform, selectors }) {
   const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
   const RETRY_AFTER_MS = 5 * 60 * 1000;
   const MIN_FETCH_GAP_MS = 300;
+  const DISLIKE_WEIGHT = 4;
   const SMILEY_GOOD = 70;
   const SMILEY_MEH = 40;
   const SMILEY_RADIUS = "10.26";
@@ -26,6 +28,23 @@ export function initRatioYT({ platform, selectors }) {
     meh: "M15.71 15.78H8.3",
     bad: "M15.72 16.56c-.8-.8-2.07-1.3-3.72-1.3s-2.86.58-3.72 1.3",
   };
+
+  function computeWeightedScore(rawScore, likes, dislikes) {
+    if (rawScore < 0) return -1;
+
+    const l = Number(likes);
+    const d = Number(dislikes);
+    if (!isNaN(l) && !isNaN(d) && (l > 0 || d > 0)) {
+      const weightedTotal = l + d * DISLIKE_WEIGHT;
+      if (weightedTotal === 0) return 0;
+      return Math.max(0, Math.min(100, Math.round((l / weightedTotal) * 100)));
+    }
+
+    const r = rawScore / 100;
+    const denom = r + DISLIKE_WEIGHT * (1 - r);
+    if (denom <= 0) return 0;
+    return Math.max(0, Math.min(100, Math.round((r / denom) * 100)));
+  }
 
   const DB_NAME = platform.dbName || "RatioYT";
   const DB_STORE = "scores";
@@ -140,15 +159,21 @@ export function initRatioYT({ platform, selectors }) {
 
   function updateRenderedCards() {
     document.querySelectorAll(".ratioyt-badge").forEach((badge) => {
-      const score = parseInt(badge.dataset.ratioytValue, 10);
+      const rawScore =
+        badge.dataset.ratioytRaw !== undefined
+          ? parseInt(badge.dataset.ratioytRaw, 10)
+          : parseInt(badge.dataset.ratioytValue, 10);
       const likes = badge.dataset.ratioytLikes
         ? Number(badge.dataset.ratioytLikes)
+        : undefined;
+      const dislikes = badge.dataset.ratioytDislikes
+        ? Number(badge.dataset.ratioytDislikes)
         : undefined;
       const card = badge.closest(
         "ytd-rich-item-renderer, ytd-video-renderer, ytd-compact-video-renderer, ytd-reel-item-renderer, ytm-shorts-lockup-view-model-v2, yt-shorts-lockup-view-model, ytm-shorts-lockup-view-model, yt-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, .ytp-ce-element"
       );
-      if (!isNaN(score) && card) {
-        applyScore(card, badge, score, likes);
+      if (!isNaN(rawScore) && card) {
+        applyScore(card, badge, rawScore, likes, dislikes);
       }
     });
   }
@@ -193,6 +218,9 @@ export function initRatioYT({ platform, selectors }) {
         const now = Date.now();
         for (const entry of getAll.result || []) {
           if (entry.expiresAt > now) {
+            if (entry.rawScore === undefined && entry.score !== undefined) {
+              entry.rawScore = entry.score;
+            }
             scoreDB.set(entry.videoId, entry);
           } else {
             store.delete(entry.videoId);
@@ -204,9 +232,9 @@ export function initRatioYT({ platform, selectors }) {
     });
   }
 
-  function saveToCache(videoId, score, likes) {
+  function saveToCache(videoId, rawScore, likes, dislikes) {
     const expiresAt = Date.now() + CACHE_TTL_MS;
-    const record = { videoId, score, likes, expiresAt };
+    const record = { videoId, score: rawScore, rawScore, likes, dislikes, expiresAt };
     scoreDB.set(videoId, record);
 
     if (dbInstance) {
@@ -315,7 +343,7 @@ export function initRatioYT({ platform, selectors }) {
     return svg;
   }
 
-  function renderStars(score) {
+  function renderStars(score, rawScore) {
     const rating = Math.max(0, Math.min(5, Math.round((score / 100) * 10) / 2));
     const full = Math.floor(rating);
     const hasHalf = rating % 1 !== 0;
@@ -323,7 +351,12 @@ export function initRatioYT({ platform, selectors }) {
 
     const wrap = document.createElement("span");
     wrap.className = "ratioyt-stars-wrap";
-    wrap.title = `${rating} / 5 stars (${score}%)`;
+    wrap.title =
+      (userSettings.weightedRating ?? DEFAULTS.weightedRating) &&
+      rawScore !== undefined &&
+      rawScore !== score
+        ? `${rating} / 5 stars (${score}% weighted, ${rawScore}% raw)`
+        : `${rating} / 5 stars (${score}%)`;
 
     for (let i = 0; i < full; i++) wrap.appendChild(createStarSvg("full"));
     if (hasHalf) wrap.appendChild(createStarSvg("half"));
@@ -362,7 +395,7 @@ export function initRatioYT({ platform, selectors }) {
     return wrap;
   }
 
-  function renderSmiley(score) {
+  function renderSmiley(score, rawScore) {
     const mouth =
       score >= SMILEY_GOOD
         ? SMILEY_MOUTHS.good
@@ -372,7 +405,12 @@ export function initRatioYT({ platform, selectors }) {
 
     const wrap = document.createElement("span");
     wrap.className = "ratioyt-badge-svg";
-    wrap.title = `${score}%`;
+    wrap.title =
+      (userSettings.weightedRating ?? DEFAULTS.weightedRating) &&
+      rawScore !== undefined &&
+      rawScore !== score
+        ? `${score}% weighted (${rawScore}% raw)`
+        : `${score}%`;
 
     const el = (tag, attrs) => {
       const node = document.createElementNS(SVG_NS, tag);
@@ -534,16 +572,25 @@ export function initRatioYT({ platform, selectors }) {
     container.replaceChildren(placeholder);
   }
 
-  function applyScore(card, badge, score, likes) {
+  function applyScore(card, badge, rawScore, likes, dislikes) {
+    const isWeighted = userSettings.weightedRating ?? DEFAULTS.weightedRating;
+    const score = isWeighted
+      ? computeWeightedScore(rawScore, likes, dislikes)
+      : rawScore;
+
     // If video is below minimum score threshold, replace it with a dark gradient blur placeholder
     if (userSettings.hideLowScore && score >= 0 && score < userSettings.lowScoreThreshold) {
       hideCard(card);
       return;
     }
 
+    badge.dataset.ratioytRaw = String(rawScore);
     badge.dataset.ratioytValue = String(score);
     if (likes !== undefined && likes !== null) {
       badge.dataset.ratioytLikes = String(likes);
+    }
+    if (dislikes !== undefined && dislikes !== null) {
+      badge.dataset.ratioytDislikes = String(dislikes);
     }
 
     if (score < 0) {
@@ -555,13 +602,21 @@ export function initRatioYT({ platform, selectors }) {
     badge.classList.remove("ratioyt-smiley");
 
     if (userSettings.scoringSystem === "stars") {
-      badge.replaceChildren(renderStars(score));
+      badge.replaceChildren(renderStars(score, rawScore));
     } else if (userSettings.scoringSystem === "smiley") {
-      badge.replaceChildren(renderSmiley(score));
+      badge.replaceChildren(renderSmiley(score, rawScore));
     } else if (["percentage", "decimal"].includes(userSettings.scoringSystem)) {
       badge.textContent = formatScoreText(score, userSettings.scoringSystem);
+      badge.title =
+        isWeighted && rawScore !== undefined && rawScore !== score
+          ? `${score}% weighted (${rawScore}% raw)`
+          : `${score}%`;
     } else {
       badge.replaceChildren(renderLikes(badge.dataset.ratioytLikes));
+      badge.title =
+        isWeighted && rawScore !== undefined && rawScore !== score
+          ? `${score}% weighted (${rawScore}% raw)`
+          : "";
     }
 
     badge.style.color = userSettings.scoringColour
@@ -577,7 +632,7 @@ export function initRatioYT({ platform, selectors }) {
   async function fetchScore({ videoId }) {
     const votes = await platform.fetchVotes(videoId);
     if (!votes || votes.deleted || (votes.likes === undefined && votes.dislikes === undefined)) {
-      return { score: -1 };
+      return { score: -1, rawScore: -1, likes: 0, dislikes: 0 };
     }
     // Use whichever counts RTD has: the estimates, else the raw extension votes
     let likes = votes.likes ?? 0;
@@ -587,8 +642,9 @@ export function initRatioYT({ platform, selectors }) {
       dislikes = votes.rawDislikes ?? 0;
     }
     const total = likes + dislikes;
-    if (total === 0) return { score: -1 };
-    return { score: Math.round((likes / total) * 100), likes };
+    if (total === 0) return { score: -1, rawScore: -1, likes: 0, dislikes: 0 };
+    const rawScore = Math.round((likes / total) * 100);
+    return { rawScore, score: rawScore, likes, dislikes };
   }
 
   async function drainQueue() {
@@ -604,7 +660,7 @@ export function initRatioYT({ platform, selectors }) {
 
         const cached = scoreDB.get(task.videoId);
         if (cached && cached.expiresAt > Date.now()) {
-          applyScore(task.card, task.badge, cached.score, cached.likes);
+          applyScore(task.card, task.badge, cached.rawScore ?? cached.score, cached.likes, cached.dislikes);
           continue;
         }
 
@@ -615,11 +671,11 @@ export function initRatioYT({ platform, selectors }) {
 
         lastFetchTime = Date.now();
         try {
-          const { score, likes } = await fetchScore(task);
-          saveToCache(task.videoId, score, likes);
+          const { rawScore, likes, dislikes } = await fetchScore(task);
+          saveToCache(task.videoId, rawScore, likes, dislikes);
           failedVideos.delete(task.videoId);
           if (document.body.contains(task.card)) {
-            applyScore(task.card, task.badge, score, likes);
+            applyScore(task.card, task.badge, rawScore, likes, dislikes);
           }
         } catch (err) {
           console.warn("[RatioYT] Failed score lookup:", task.videoId, err.message);
@@ -672,7 +728,7 @@ export function initRatioYT({ platform, selectors }) {
       const cached = scoreDB.get(videoId);
 
       if (cached && cached.expiresAt > Date.now()) {
-        applyScore(card, badge, cached.score, cached.likes);
+        applyScore(card, badge, cached.rawScore ?? cached.score, cached.likes, cached.dislikes);
       } else {
         enqueueTask({ videoId, card, badge });
       }
