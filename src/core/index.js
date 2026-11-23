@@ -18,15 +18,13 @@ export function initRatioYT({ platform, selectors }) {
   const MIN_FETCH_GAP_MS = 300;
   const SMILEY_GOOD = 70;
   const SMILEY_MEH = 40;
-  // Filled face with the eyes and mouth punched out via fill-rule, so the
-  // features show the page background instead of needing a second colour
-  const SMILEY_FACE = "M12 1.5a10.5 10.5 0 1 1 0 21a10.5 10.5 0 1 1 0-21";
+  const SMILEY_RADIUS = "10.26";
   const SMILEY_EYES =
-    "M8.6 7.8a1.6 1.6 0 1 1 0 3.2a1.6 1.6 0 1 1 0-3.2M15.4 7.8a1.6 1.6 0 1 1 0 3.2a1.6 1.6 0 1 1 0-3.2";
+    "M9.59 9.53a.8.8 0 1 1-1.6 0a.8.8 0 0 1 1.6 0m6.41 0a.8.8 0 1 1-1.59 0a.8.8 0 0 1 1.6 0";
   const SMILEY_MOUTHS = {
-    good: "M6.8 14.3a8 8 0 0 0 10.4 0a5.6 5.6 0 0 1-10.4 0Z",
-    meh: "M7 14.4h10v1.8H7Z",
-    bad: "M6.8 17.4a8 8 0 0 1 10.4 0a5.6 5.6 0 0 0-10.4 0Z",
+    good: "M15.71 15.38A5.2 5.2 0 0 1 12 16.67a5.6 5.6 0 0 1-3.71-1.3",
+    meh: "M15.71 15.78H8.3",
+    bad: "M15.72 16.56c-.8-.8-2.07-1.3-3.72-1.3s-2.86.58-3.72 1.3",
   };
 
   const DB_NAME = platform.dbName || "RatioYT";
@@ -376,16 +374,48 @@ export function initRatioYT({ platform, selectors }) {
     wrap.className = "ratioyt-badge-svg";
     wrap.title = `${score}%`;
 
-    const svg = document.createElementNS(SVG_NS, "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("width", "16");
-    svg.setAttribute("height", "16");
+    const el = (tag, attrs) => {
+      const node = document.createElementNS(SVG_NS, tag);
+      for (const [name, value] of Object.entries(attrs)) {
+        node.setAttribute(name, value);
+      }
+      return node;
+    };
 
-    const path = document.createElementNS(SVG_NS, "path");
-    path.setAttribute("fill", "currentColor");
-    path.setAttribute("fill-rule", "evenodd");
-    path.setAttribute("d", `${SMILEY_FACE}${SMILEY_EYES}${mouth}`);
-    svg.appendChild(path);
+    const svg = el("svg", { viewBox: "0 0 24 24", width: "16", height: "16" });
+    svg.append(
+      el("circle", {
+        cx: "12",
+        cy: "12",
+        r: SMILEY_RADIUS,
+        fill: "currentColor",
+        opacity: ".2",
+      }),
+      el("circle", {
+        cx: "12",
+        cy: "12",
+        r: SMILEY_RADIUS,
+        fill: "none",
+        stroke: "currentColor",
+        "stroke-width": "1.5",
+      }),
+      el("path", {
+        d: SMILEY_EYES,
+        fill: "currentColor",
+        stroke: "currentColor",
+        "stroke-width": "1.5",
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+      }),
+      el("path", {
+        d: mouth,
+        fill: "none",
+        stroke: "currentColor",
+        "stroke-width": "1.5",
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+      }),
+    );
 
     wrap.appendChild(svg);
     return wrap;
