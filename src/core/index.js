@@ -463,8 +463,13 @@ export function initRatioYT({ platform, selectors }) {
     if (!votes || votes.deleted || (votes.likes === undefined && votes.dislikes === undefined)) {
       return -1;
     }
-    const total = (votes.likes ?? 0) + (votes.dislikes ?? 0);
-    return total > 0 ? Math.round(((votes.likes ?? 0) / total) * 100) : 0;
+    const likes = votes.likes ?? 0;
+    const dislikes = votes.dislikes ?? 0;
+    const total = likes + dislikes;
+    // Only trust the estimates when they exist and something was actually measured
+    if (total === 0) return -1;
+    if ((votes.rawLikes ?? 0) === 0) return -1;
+    return Math.round((likes / total) * 100);
   }
 
   async function drainQueue() {
