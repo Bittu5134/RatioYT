@@ -1,5 +1,5 @@
 export const DEFAULTS = {
-  scoringSystem: "stars",
+  scoringSystem: "likes",
   scoringColour: true,
   hideOnlyMode: false,
   hideLowScore: false,
@@ -21,7 +21,7 @@ export function initRatioYT({ platform, selectors }) {
 
   const DB_NAME = platform.dbName || "RatioYT";
   const DB_STORE = "scores";
-  const DB_VERSION = 2;
+  const DB_VERSION = 3;
   let dbInstance = null;
 
   // In-memory cache for synchronous instant lookups during DOM scans
@@ -57,6 +57,16 @@ export function initRatioYT({ platform, selectors }) {
         vertical-align: -1.5px !important;
       }
       .ratioyt-star {
+        display: inline-block !important;
+        flex-shrink: 0 !important;
+      }
+      .ratioyt-likes-wrap {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 3px !important;
+        vertical-align: -1.5px !important;
+      }
+      .ratioyt-arrow {
         display: inline-block !important;
         flex-shrink: 0 !important;
       }
@@ -122,11 +132,14 @@ export function initRatioYT({ platform, selectors }) {
   function updateRenderedCards() {
     document.querySelectorAll(".ratioyt-badge").forEach((badge) => {
       const score = parseInt(badge.dataset.ratioytValue, 10);
+      const likes = badge.dataset.ratioytLikes
+        ? Number(badge.dataset.ratioytLikes)
+        : undefined;
       const card = badge.closest(
         "ytd-rich-item-renderer, ytd-video-renderer, ytd-compact-video-renderer, ytd-reel-item-renderer, ytm-shorts-lockup-view-model-v2, yt-shorts-lockup-view-model, ytm-shorts-lockup-view-model, yt-lockup-view-model, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer, .ytp-ce-element"
       );
       if (!isNaN(score) && card) {
-        applyScore(card, badge, score);
+        applyScore(card, badge, score, likes);
       }
     });
   }
@@ -182,9 +195,9 @@ export function initRatioYT({ platform, selectors }) {
     });
   }
 
-  function saveToCache(videoId, score) {
+  function saveToCache(videoId, score, likes) {
     const expiresAt = Date.now() + CACHE_TTL_MS;
-    const record = { videoId, score, expiresAt };
+    const record = { videoId, score, likes, expiresAt };
     scoreDB.set(videoId, record);
 
     if (dbInstance) {
@@ -310,6 +323,36 @@ export function initRatioYT({ platform, selectors }) {
     return wrap;
   }
 
+  const UP_ARROW_PATH = "M12 2.5 21.5 13H16v8.5H8V13H2.5L12 2.5Z";
+  const LIKE_COUNT_FORMAT = new Intl.NumberFormat("en", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  });
+
+  function renderLikes(likes) {
+    const total = Number(likes) || 0;
+
+    const wrap = document.createElement("span");
+    wrap.className = "ratioyt-likes-wrap";
+    wrap.title = `${total.toLocaleString("en")} likes`;
+
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("class", "ratioyt-arrow");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("width", "12");
+    svg.setAttribute("height", "12");
+    svg.setAttribute("fill", "currentColor");
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", UP_ARROW_PATH);
+    svg.appendChild(path);
+
+    const count = document.createElement("span");
+    count.textContent = LIKE_COUNT_FORMAT.format(total).toLowerCase();
+
+    wrap.append(svg, count);
+    return wrap;
+  }
+
   function formatScoreText(score, format) {
     switch (format) {
       case "decimal":
@@ -425,7 +468,7 @@ export function initRatioYT({ platform, selectors }) {
     container.replaceChildren(placeholder);
   }
 
-  function applyScore(card, badge, score) {
+  function applyScore(card, badge, score, likes) {
     // If video is below minimum score threshold, replace it with a dark gradient blur placeholder
     if (userSettings.hideLowScore && score >= 0 && score < userSettings.lowScoreThreshold) {
       hideCard(card);
@@ -433,6 +476,9 @@ export function initRatioYT({ platform, selectors }) {
     }
 
     badge.dataset.ratioytValue = String(score);
+    if (likes !== undefined && likes !== null) {
+      badge.dataset.ratioytLikes = String(likes);
+    }
 
     if (score < 0) {
       badge.textContent = "N/A";
@@ -443,6 +489,9 @@ export function initRatioYT({ platform, selectors }) {
     if (userSettings.scoringSystem === "stars") {
       badge.classList.remove("ratioyt-smiley");
       badge.replaceChildren(renderStars(score));
+    } else if (userSettings.scoringSystem === "likes") {
+      badge.classList.remove("ratioyt-smiley");
+      badge.replaceChildren(renderLikes(badge.dataset.ratioytLikes));
     } else {
       badge.classList.toggle("ratioyt-smiley", userSettings.scoringSystem === "smiley");
       badge.textContent = formatScoreText(score, userSettings.scoringSystem);
@@ -461,15 +510,15 @@ export function initRatioYT({ platform, selectors }) {
   async function fetchScore({ videoId }) {
     const votes = await platform.fetchVotes(videoId);
     if (!votes || votes.deleted || (votes.likes === undefined && votes.dislikes === undefined)) {
-      return -1;
+      return { score: -1 };
     }
     const likes = votes.likes ?? 0;
     const dislikes = votes.dislikes ?? 0;
     const total = likes + dislikes;
     // Only trust the estimates when they exist and something was actually measured
-    if (total === 0) return -1;
-    if ((votes.rawLikes ?? 0) === 0) return -1;
-    return Math.round((likes / total) * 100);
+    if (total === 0) return { score: -1 };
+    if ((votes.rawLikes ?? 0) === 0) return { score: -1 };
+    return { score: Math.round((likes / total) * 100), likes };
   }
 
   async function drainQueue() {
@@ -485,7 +534,7 @@ export function initRatioYT({ platform, selectors }) {
 
         const cached = scoreDB.get(task.videoId);
         if (cached && cached.expiresAt > Date.now()) {
-          applyScore(task.card, task.badge, cached.score);
+          applyScore(task.card, task.badge, cached.score, cached.likes);
           continue;
         }
 
@@ -496,11 +545,11 @@ export function initRatioYT({ platform, selectors }) {
 
         lastFetchTime = Date.now();
         try {
-          const score = await fetchScore(task);
-          saveToCache(task.videoId, score);
+          const { score, likes } = await fetchScore(task);
+          saveToCache(task.videoId, score, likes);
           failedVideos.delete(task.videoId);
           if (document.body.contains(task.card)) {
-            applyScore(task.card, task.badge, score);
+            applyScore(task.card, task.badge, score, likes);
           }
         } catch (err) {
           console.warn("[RatioYT] Failed score lookup:", task.videoId, err.message);
@@ -553,7 +602,7 @@ export function initRatioYT({ platform, selectors }) {
       const cached = scoreDB.get(videoId);
 
       if (cached && cached.expiresAt > Date.now()) {
-        applyScore(card, badge, cached.score);
+        applyScore(card, badge, cached.score, cached.likes);
       } else {
         enqueueTask({ videoId, card, badge });
       }

@@ -10,7 +10,7 @@ const UI = {
 };
 
 const DEFAULTS = {
-  scoringSystem: "stars",
+  scoringSystem: "likes",
   scoringColour: true,
   hideOnlyMode: false,
   hideLowScore: false,

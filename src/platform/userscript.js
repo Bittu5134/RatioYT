@@ -83,7 +83,7 @@ export function createUserscriptPlatform() {
         GM_registerMenuCommand("⚙️ Settings (Open Web Dashboard)", openSettings);
         GM_registerMenuCommand("Format: Cycle Score Style", () => {
           storage.get(DEFAULTS, (cfg) => {
-            const styles = ["percentage", "decimal", "smiley", "stars"];
+            const styles = ["likes", "percentage", "decimal", "smiley", "stars"];
             const next = styles[(styles.indexOf(cfg.scoringSystem) + 1) % styles.length];
             storage.set({ scoringSystem: next });
           });
